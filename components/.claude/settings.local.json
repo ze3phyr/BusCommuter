@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/zeph/Projects/IDT-Projects/bus-commuter/**)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
