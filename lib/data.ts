@@ -46,5 +46,5 @@ export const mockRoutes: Route[] = [
       { id: "s8", name: "Mulki", lat: 13.0500, lng: 74.7800, arrivalTime: "08:35" },
       { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "09:30" },
     ]
-  },
+  }
 ];
