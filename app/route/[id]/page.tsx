@@ -1,41 +1,30 @@
 // app/route/[id]/page.tsx
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import { ArrowLeft, Clock, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 import { mockRoutes, Route as RouteType } from '@/lib/data';
-
-// Dynamic import for map component
-const RouteMap = dynamic(() => import('@/components/RouteMap'), { 
-  ssr: false 
-});
+import RouteMap from '@/components/RouteMap';
 
 export default function RoutePage() {
   const params = useParams();
-  const router = useRouter();
-  
-  const [route, setRoute] = useState<RouteType | null>(null);
+
   const [isFavorite, setIsFavorite] = useState(false);
 
-  useEffect(() => {
-    const routeId = params.id as string;
-    const foundRoute = mockRoutes.find(r => r.id === routeId);
-
-    if (foundRoute) {
-      setRoute(foundRoute);
-    } else {
-      // Redirect to home if route not found
-      router.push('/');
-    }
-  }, [params.id, router]);
+  const routeId = params.id as string;
+  const route = mockRoutes.find(r => r.id === routeId);
 
   if (!route) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-gray-600">Loading route...</p>
+        <div className="text-center">
+          <p className="text-xl text-gray-600 mb-4">Route not found</p>
+          <Link href="/" className="text-green-600 hover:underline">
+            &larr; Back to Home
+          </Link>
+        </div>
       </div>
     );
   }

@@ -1,9 +1,9 @@
 // components/RouteMap.tsx
 'use client';
 
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { Route } from '@/lib/data';
 
 // Fix Leaflet default marker icons in Next.js
@@ -26,20 +26,22 @@ export default function RouteMap({ route }: RouteMapProps) {
     <MapContainer
       center={center}
       zoom={11}
-      className="leaflet-container"
-      scrollWheelZoom={true}
+      className="h-[400px] w-full rounded-2xl"
+      scrollWheelZoom={false}
+      dragging={true}
+      zoomControl={true}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap contributors'
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
 
       {/* Draw the route line */}
-      <Polyline 
-        positions={positions} 
-        color={route.color} 
-        weight={7} 
-        opacity={0.85}
+      <Polyline
+        positions={positions}
+        color={route.color}
+        weight={5}
+        opacity={0.7}
       />
 
       {/* Markers for each stop */}
