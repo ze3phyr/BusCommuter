@@ -178,3 +178,8 @@ export function findRoutes(fromQuery: string, toQuery: string): Route[] {
     return matchesFrom && matchesTo;
   });
 }
+
+export function formatDisplayTime(time: string): string {
+  if (!time) return "";
+  return `${time} PM`;
+}
