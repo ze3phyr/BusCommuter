@@ -1,18 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { LocateFixed, Menu, Moon, Search, Sun, UserRound } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
+import { LocateFixed, Search, UserRound } from 'lucide-react';
+import { getLocationSuggestions } from '@/lib/data';
 
 interface SearchHeaderProps {
-  onSidebarToggle: () => void;
   onSearch: (from: string, to: string) => void;
+  onProfileClick: () => void;
+  signedInLabel?: string;
 }
 
-export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeaderProps) {
+export default function SearchHeader({ onSearch, onProfileClick, signedInLabel }: SearchHeaderProps) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const { isDark, toggleTheme } = useTheme();
+  const fromSuggestions = getLocationSuggestions(from);
+  const toSuggestions = getLocationSuggestions(to);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -32,15 +34,6 @@ export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeader
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-50/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onSidebarToggle}
-            className="rounded-lg border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-            aria-label="Open navigation"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
           <form onSubmit={handleSearch} className="hidden flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:flex">
             <div className="relative min-w-0 flex-1">
               <span className="absolute left-3 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-emerald-500" />
@@ -50,6 +43,7 @@ export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeader
                 placeholder="From"
                 className="h-11 w-full rounded-md border border-transparent bg-slate-50 pl-8 pr-11 text-sm font-medium text-slate-900 transition placeholder:text-slate-400 focus:border-emerald-300 focus:bg-white dark:bg-slate-950 dark:text-white dark:focus:bg-slate-950"
                 aria-label="From"
+                list="from-stop-suggestions"
               />
               <button
                 type="button"
@@ -71,6 +65,7 @@ export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeader
                 placeholder="Where"
                 className="h-11 w-full rounded-md border border-transparent bg-slate-50 pl-8 pr-3 text-sm font-medium text-slate-900 transition placeholder:text-slate-400 focus:border-blue-300 focus:bg-white dark:bg-slate-950 dark:text-white dark:focus:bg-slate-950"
                 aria-label="Where"
+                list="to-stop-suggestions"
               />
             </div>
 
@@ -83,23 +78,27 @@ export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeader
             </button>
           </form>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="rounded-lg border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-            <button
-              type="button"
-              className="rounded-lg bg-slate-950 p-2.5 text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
-              aria-label="Open account"
-            >
-              <UserRound className="h-5 w-5" />
-            </button>
-          </div>
+          <datalist id="from-stop-suggestions">
+            {fromSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+
+          <datalist id="to-stop-suggestions">
+            {toSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+
+          <button
+            type="button"
+            onClick={onProfileClick}
+            className="ml-auto rounded-lg bg-slate-950 p-2.5 text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
+            aria-label={signedInLabel ? `Open account for ${signedInLabel}` : 'Open login'}
+            title={signedInLabel ? `Signed in as ${signedInLabel}` : 'Sign in'}
+          >
+            <UserRound className="h-5 w-5" />
+          </button>
         </div>
 
         <form onSubmit={handleSearch} className="mt-4 space-y-2 md:hidden">
@@ -110,6 +109,7 @@ export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeader
               placeholder="From"
               className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
               aria-label="From"
+              list="from-stop-suggestions-mobile"
             />
             <input
               value={to}
@@ -117,8 +117,19 @@ export default function SearchHeader({ onSidebarToggle, onSearch }: SearchHeader
               placeholder="Where"
               className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
               aria-label="Where"
+              list="to-stop-suggestions-mobile"
             />
           </div>
+          <datalist id="from-stop-suggestions-mobile">
+            {fromSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+          <datalist id="to-stop-suggestions-mobile">
+            {toSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
           <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-bold text-white">
             <Search className="h-4 w-4" />
             Search routes

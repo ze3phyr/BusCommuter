@@ -3,6 +3,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronLeft, ChevronRight, LocateFixed, MapPin, Navigation2, X } from 'lucide-react';
+import AccountMenu from '@/components/AccountMenu';
+import LoginModal from '@/components/LoginModal';
+import ProfileModal, { ProfileUser } from '@/components/ProfileModal';
 import RouteCard from '@/components/RouteCard';
 import SearchHeader from '@/components/SearchHeader';
 import Sidebar from '@/components/Sidebar';
@@ -21,6 +24,8 @@ type UserLocation = {
   isFallback: boolean;
 };
 
+type SignedInUser = ProfileUser;
+
 const fallbackLocation: UserLocation = {
   lat: 13.3325,
   lng: 74.744,
@@ -34,6 +39,13 @@ const StopDistanceMap = dynamic(() => import('@/components/StopDistanceMap'), {
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [signedInUser, setSignedInUser] = useState<SignedInUser | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return JSON.parse(localStorage.getItem('signedInUser') || 'null') as SignedInUser | null;
+  });
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const [favoriteRoutes, setFavoriteRoutes] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     return JSON.parse(localStorage.getItem('favorites') || '[]') as string[];
@@ -47,6 +59,54 @@ export default function Home() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const { showToast } = useToast();
+
+  const signedInLabel = signedInUser?.displayName || (signedInUser?.contact.includes('@')
+    ? signedInUser.contact.split('@')[0]
+    : signedInUser?.contact);
+
+  const handleProfileClick = useCallback(() => {
+    if (!signedInUser) {
+      setLoginOpen(true);
+      return;
+    }
+
+    setAccountMenuOpen(true);
+  }, [signedInUser]);
+
+  const handleViewProfile = useCallback(() => {
+    setAccountMenuOpen(false);
+    setProfileOpen(true);
+  }, []);
+
+  const handleSignOut = useCallback(() => {
+    localStorage.removeItem('signedInUser');
+    setSignedInUser(null);
+    setAccountMenuOpen(false);
+    setProfileOpen(false);
+    showToast('Signed out successfully', 'info');
+  }, [showToast]);
+
+  const handleSignIn = useCallback(
+    (contact: string) => {
+      const nextUser = { contact };
+      setSignedInUser(nextUser);
+      localStorage.setItem('signedInUser', JSON.stringify(nextUser));
+      setLoginOpen(false);
+      setAccountMenuOpen(false);
+      showToast('Signed in successfully');
+    },
+    [showToast]
+  );
+
+  const handleSaveProfile = useCallback(
+    (user: SignedInUser) => {
+      setSignedInUser(user);
+      localStorage.setItem('signedInUser', JSON.stringify(user));
+      setProfileOpen(false);
+      showToast('Profile updated');
+    },
+    [showToast]
+  );
 
   const handleToggleFavorite = useCallback(
     (routeId: string) => {
@@ -190,7 +250,7 @@ export default function Home() {
       />
 
       <div className={`min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
-        <SearchHeader onSidebarToggle={() => setSidebarOpen((current) => !current)} onSearch={handleSearch} />
+        <SearchHeader onSearch={handleSearch} onProfileClick={handleProfileClick} signedInLabel={signedInLabel} />
 
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
           {showHomeContent && (
@@ -255,7 +315,7 @@ export default function Home() {
                               key={`${item.stop.name}-${item.stop.lat}-${item.stop.lng}`}
                               type="button"
                               onClick={() => setSelectedNearestStop(item)}
-                              className="w-full min-w-full flex-none rounded-lg border border-slate-100 bg-slate-50 p-5 text-left transition hover:border-emerald-200 hover:bg-white focus:border-emerald-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-emerald-800"
+                              className="w-full min-w-full flex-none rounded-lg border border-slate-100 bg-slate-50 p-5 text-left transition hover:border-emerald-200 hover:bg-white focus:border-emerald-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-emerald-800 dark:hover:bg-slate-900"
                               aria-label={`Open map for ${item.stop.name}`}
                             >
                               <div className="flex items-start justify-between gap-3">
@@ -425,6 +485,21 @@ export default function Home() {
           </div>
         </footer>
       </div>
+
+      <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} onSignIn={handleSignIn} />
+      {signedInUser && (
+        <>
+          <AccountMenu
+            contact={signedInUser.contact}
+            displayName={signedInUser.displayName}
+            isOpen={accountMenuOpen}
+            onClose={() => setAccountMenuOpen(false)}
+            onViewProfile={handleViewProfile}
+            onSignOut={handleSignOut}
+          />
+          <ProfileModal user={signedInUser} isOpen={profileOpen} onClose={() => setProfileOpen(false)} onSave={handleSaveProfile} />
+        </>
+      )}
     </div>
   );
 }

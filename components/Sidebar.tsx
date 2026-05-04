@@ -41,6 +41,17 @@ export default function Sidebar({
 
   return (
     <>
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="fixed bottom-4 left-4 z-40 rounded-full bg-slate-950 p-3 text-white shadow-xl shadow-slate-950/25 transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 lg:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
+
       {isOpen && (
         <button
           type="button"
