@@ -1,317 +1,164 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import {
-  Heart,
-  Clock,
-  Settings,
-  MapPin,
-  ChevronLeft,
-  ChevronRight,
-  Bus,
-  Star,
-  Info,
-  Moon,
-  Sun,
-  User,
-  Trash2,
-  Share2,
-  Download,
-  Bell,
-  BellOff
-} from 'lucide-react';
-import { mockRoutes, Route } from '@/lib/data';
+import { usePathname } from 'next/navigation';
+import { Bus, CalendarDays, Heart, Home, Info, Map, Menu, Moon, Route, Sun, X } from 'lucide-react';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  favoriteRoutes: string[];
-  onToggleFavorite: (routeId: string) => void;
-  isDark: boolean;
-  onThemeToggle: () => void;
   activeSection: string;
   onSectionChange: (section: string) => void;
+  favoriteCount: number;
 }
 
-const menuItems = [
+const navItems = [
+  { icon: Home, label: 'Home', id: 'home' },
   { icon: Heart, label: 'Favorites', id: 'favorites' },
-  { icon: Clock, label: 'Recent', id: 'recent' },
-  { icon: MapPin, label: 'Nearby', id: 'nearby' },
-  { icon: Star, label: 'Saved', id: 'saved' },
-];
-
-const settingsItems = [
-  { icon: Bell, label: 'Notifications', id: 'notifications', toggle: true },
-  { icon: Download, label: 'Offline Maps', id: 'offline' },
-  { icon: Share2, label: 'Share App', id: 'share' },
+  { icon: CalendarDays, label: 'Schedules', id: 'schedules' },
+  { icon: Route, label: 'Routes', id: 'routes' },
+  { icon: Info, label: 'About', id: 'about' },
 ];
 
 export default function Sidebar({
   isOpen,
   onClose,
-  favoriteRoutes,
-  onToggleFavorite,
-  isDark,
-  onThemeToggle,
   activeSection,
-  onSectionChange
+  onSectionChange,
+  favoriteCount,
 }: SidebarProps) {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [offlineMapsEnabled, setOfflineMapsEnabled] = useState(false);
+  const pathname = usePathname();
+  const { isDark, toggleTheme } = useTheme();
+  const compact = !isOpen;
 
-  const handleMenuItemClick = (id: string) => {
-    onSectionChange(id);
+  const handleNav = (section: string) => {
+    onSectionChange(section);
     if (window.innerWidth < 1024) {
       onClose();
     }
   };
 
-  const handleToggleNotifications = () => {
-    setNotificationsEnabled(prev => !prev);
-    // In a real app, this would update user preferences or send to API
-    console.log('Notifications:', !notificationsEnabled ? 'enabled' : 'disabled');
-  };
-
-  const handleToggleOfflineMaps = () => {
-    setOfflineMapsEnabled(prev => !prev);
-    console.log('Offline Maps:', !offlineMapsEnabled ? 'enabled' : 'disabled');
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Bus Commuter',
-        text: 'Find your perfect bus route with Bus Commuter!',
-        url: window.location.href,
-      }).catch(() => {});
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
-    }
-  };
-
-  const getFavoriteRouteDetails = (routeId: string) => {
-    return mockRoutes.find(r => r.id === routeId);
-  };
-
   return (
     <>
-      {/* Overlay */}
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="fixed bottom-4 left-4 z-40 rounded-full bg-slate-950 p-3 text-white shadow-xl shadow-slate-950/25 transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 lg:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
+
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        <button
+          type="button"
+          aria-label="Close navigation overlay"
+          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 z-50 transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-64' : 'w-0 lg:w-16'
-        } overflow-hidden`}
+        className={`fixed inset-y-0 left-0 z-50 border-r border-slate-200/80 bg-white/95 shadow-2xl shadow-slate-950/5 backdrop-blur-xl transition-[width,transform] duration-300 dark:border-slate-800 dark:bg-slate-950/95 lg:translate-x-0 ${
+          isOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full lg:w-20'
+        }`}
+        aria-label="Primary navigation"
       >
-        <div className="flex flex-col h-full">
-          {/* Logo Section */}
-          <div className={`p-3 border-b border-gray-200 dark:border-zinc-800 ${!isOpen && 'lg:p-2'}`}>
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
-                <Bus className="text-white" size={18} />
-              </div>
-              {isOpen && (
-                <div className="transition-opacity duration-200">
-                  <h1 className="text-sm font-bold text-gray-900 dark:text-white">Bus Commuter</h1>
-                </div>
-              )}
+        <div className="flex h-full flex-col p-3">
+          <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/80 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/40">
+            <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-emerald-600 text-white shadow-lg shadow-emerald-900/20">
+              <Bus className="h-5 w-5" />
             </div>
+            {!compact && (
+              <div className="min-w-0">
+                <Link href="/" className="block truncate text-base font-bold text-slate-950 dark:text-white">
+                  Bus Commuter
+                </Link>
+                <p className="truncate text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                  Coastal transit intelligence
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="ml-auto rounded-md p-2 text-slate-500 transition hover:bg-white hover:text-slate-900 dark:hover:bg-slate-900 dark:hover:text-white lg:hidden"
+              aria-label="Close sidebar"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* User Profile */}
-          {isOpen && (
-            <div className="p-3 border-b border-gray-200 dark:border-zinc-800">
-              <div className="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-zinc-800">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <User size={16} className="text-white" />
+          <nav className="mt-5 flex-1 space-y-1">
+            {navItems.map((item) => {
+              const selected = activeSection === item.id || (item.id === 'home' && pathname === '/' && activeSection === '');
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleNav(item.id)}
+                  className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold transition ${
+                    selected
+                      ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/10 dark:bg-white dark:text-slate-950'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'
+                  } ${compact ? 'lg:justify-center' : ''}`}
+                  title={compact ? item.label : undefined}
+                  aria-current={selected ? 'page' : undefined}
+                >
+                  <item.icon className="h-5 w-5 flex-none" />
+                  {!compact && <span className="min-w-0 flex-1 text-left">{item.label}</span>}
+                  {!compact && item.id === 'favorites' && favoriteCount > 0 && (
+                    <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-xs text-white">{favoriteCount}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="space-y-3 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <div className={`rounded-lg bg-slate-100 p-3 dark:bg-slate-900 ${compact ? 'lg:hidden' : ''}`}>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                <Map className="h-4 w-4" />
+                Service Network
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="font-bold text-slate-950 dark:text-white">24</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">tracked stops</p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Guest User</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Sign in to sync</p>
+                <div>
+                  <p className="font-bold text-slate-950 dark:text-white">6</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">active routes</p>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Navigation */}
-          <nav className={`flex-1 p-2 overflow-y-auto ${!isOpen && 'lg:hidden'}`}>
-            {isOpen && (
-              <>
-                <div className="mb-4">
-                  <p className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase">Menu</p>
-                  {menuItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleMenuItemClick(item.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                        activeSection === item.id
-                          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      <item.icon size={18} className="flex-shrink-0" />
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={`flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:text-emerald-300 ${
+                compact ? 'lg:justify-center' : ''
+              }`}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {!compact && <span>{isDark ? 'Light mode' : 'Dark mode'}</span>}
+            </button>
 
-                {/* Theme Toggle */}
-                <div className="mb-4">
-                  <p className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase">Preferences</p>
-                  <button
-                    onClick={onThemeToggle}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    {isDark ? (
-                      <Sun size={18} className="flex-shrink-0" />
-                    ) : (
-                      <Moon size={18} className="flex-shrink-0" />
-                    )}
-                    <span className="font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                  </button>
-                  <button
-                    onClick={handleToggleNotifications}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    {notificationsEnabled ? (
-                      <Bell size={18} className="flex-shrink-0 text-green-500" />
-                    ) : (
-                      <BellOff size={18} className="flex-shrink-0 text-gray-400" />
-                    )}
-                    <span className="font-medium">Notifications</span>
-                    <div className={`ml-auto w-8 h-5 rounded-full transition-colors ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-zinc-600'}`}>
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform ${notificationsEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
-                    </div>
-                  </button>
-                  <button
-                    onClick={handleToggleOfflineMaps}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <Download size={18} className="flex-shrink-0" />
-                    <span className="font-medium">Offline Maps</span>
-                    <div className={`ml-auto w-8 h-5 rounded-full transition-colors ${offlineMapsEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-zinc-600'}`}>
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform ${offlineMapsEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
-                    </div>
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <Share2 size={18} className="flex-shrink-0" />
-                    <span className="font-medium">Share App</span>
-                  </button>
-                </div>
-
-                {/* Favorites Section */}
-                {favoriteRoutes.length > 0 && (
-                  <div>
-                    <p className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase">Favorites</p>
-                    <div className="space-y-1">
-                      {favoriteRoutes.map((routeId) => {
-                        const route = getFavoriteRouteDetails(routeId);
-                        if (!route) return null;
-                        return (
-                          <Link
-                            key={routeId}
-                            href={`/route/${routeId}`}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
-                          >
-                            <div
-                              className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
-                              style={{ backgroundColor: route.color }}
-                            >
-                              {route.busNumber}
-                            </div>
-                            <span className="truncate flex-1">{route.routeName}</span>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onToggleFavorite(routeId);
-                              }}
-                              className="p-1 hover:bg-green-200 dark:hover:bg-green-800 rounded"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bottom Section */}
-                <div className="mt-auto pt-4 border-t border-gray-200 dark:border-zinc-800">
-                  <button
-                    onClick={() => handleMenuItemClick('settings')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <Settings size={18} className="flex-shrink-0" />
-                    <span className="font-medium">Settings</span>
-                  </button>
-                  <button
-                    onClick={() => handleMenuItemClick('about')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <Info size={18} className="flex-shrink-0" />
-                    <span className="font-medium">About</span>
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Collapsed state - icons only */}
-            {!isOpen && (
-              <div className="flex flex-col items-center gap-2 lg:p-1">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleMenuItemClick(item.id)}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                      activeSection === item.id
-                        ? 'bg-green-50 dark:bg-green-900/20'
-                        : 'hover:bg-gray-100 dark:hover:bg-zinc-800'
-                    }`}
-                    title={item.label}
-                  >
-                    <item.icon size={18} className={activeSection === item.id ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'} />
-                  </button>
-                ))}
-                <div className="w-8 h-px bg-gray-200 dark:bg-zinc-700 my-2" />
-                <button
-                  onClick={onThemeToggle}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                  title={isDark ? 'Light Mode' : 'Dark Mode'}
-                >
-                  {isDark ? (
-                    <Sun size={18} className="text-gray-600 dark:text-gray-400" />
-                  ) : (
-                    <Moon size={18} className="text-gray-600 dark:text-gray-400" />
-                  )}
-                </button>
-              </div>
-            )}
-          </nav>
-
-          {/* Collapse Toggle */}
-          <button
-            onClick={onClose}
-            className="absolute -right-3 top-16 w-6 h-6 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
-          >
-            {isOpen ? (
-              <ChevronLeft size={14} className="text-gray-500" />
-            ) : (
-              <ChevronRight size={14} className="text-gray-500" />
-            )}
-          </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="hidden w-full items-center justify-center rounded-lg p-3 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-900 dark:hover:text-white lg:flex"
+              aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </aside>
     </>

@@ -128,6 +128,106 @@ export const mockRoutes: Route[] = [
   },
 ];
 
+function normalizeSearchValue(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function levenshteinDistance(source: string, target: string): number {
+  if (source === target) return 0;
+  if (!source.length) return target.length;
+  if (!target.length) return source.length;
+
+  const previous = Array.from({ length: target.length + 1 }, (_, index) => index);
+
+  for (let row = 1; row <= source.length; row += 1) {
+    let diagonal = previous[0];
+    previous[0] = row;
+
+    for (let col = 1; col <= target.length; col += 1) {
+      const nextDiagonal = previous[col];
+      const cost = source[row - 1] === target[col - 1] ? 0 : 1;
+
+      previous[col] = Math.min(
+        previous[col] + 1,
+        previous[col - 1] + 1,
+        diagonal + cost
+      );
+
+      diagonal = nextDiagonal;
+    }
+  }
+
+  return previous[target.length];
+}
+
+function getFuzzyThreshold(query: string): number {
+  if (query.length <= 4) return 1;
+  if (query.length <= 8) return 2;
+  return 3;
+}
+
+function getSearchableLocations(route: Route): string[] {
+  return [route.from, route.to, route.routeName, ...route.stops.map((stop) => stop.name)];
+}
+
+function matchesLocation(query: string, candidate: string): boolean {
+  const normalizedQuery = normalizeSearchValue(query);
+  const normalizedCandidate = normalizeSearchValue(candidate);
+
+  if (!normalizedQuery) return true;
+  if (!normalizedCandidate) return false;
+  if (normalizedCandidate.includes(normalizedQuery)) return true;
+
+  const queryParts = normalizedQuery.split(" ");
+  const candidateParts = normalizedCandidate.split(" ");
+  const threshold = getFuzzyThreshold(normalizedQuery);
+
+  return queryParts.every((queryPart) => {
+    if (!queryPart) return true;
+
+    if (candidateParts.some((candidatePart) => candidatePart.includes(queryPart))) {
+      return true;
+    }
+
+    return candidateParts.some((candidatePart) => {
+      const distance = levenshteinDistance(queryPart, candidatePart);
+      const partThreshold = Math.min(threshold, getFuzzyThreshold(candidatePart));
+      return distance <= partThreshold;
+    });
+  });
+}
+
+export function getLocationSuggestions(query: string, maxResults: number = 6): string[] {
+  const uniqueLocations = Array.from(
+    new Set(
+      mockRoutes.flatMap((route) => [route.from, route.to, ...route.stops.map((stop) => stop.name)])
+    )
+  );
+
+  const normalizedQuery = normalizeSearchValue(query);
+
+  if (!normalizedQuery) {
+    return uniqueLocations.slice(0, maxResults);
+  }
+
+  return uniqueLocations
+    .map((location) => {
+      const normalizedLocation = normalizeSearchValue(location);
+      const locationParts = normalizedLocation.split(" ");
+      const score = normalizedLocation.startsWith(normalizedQuery)
+        ? 0
+        : normalizedLocation.includes(normalizedQuery)
+          ? 1
+          : Math.min(...locationParts.map((part) => levenshteinDistance(normalizedQuery, part)));
+
+      return { location, score };
+    })
+    .filter(({ location }) => matchesLocation(query, location))
+    .sort((left, right) => left.score - right.score || left.location.localeCompare(right.location))
+    .slice(0, maxResults)
+    .map(({ location }) => location);
+}
+
 // Helper function to calculate distance between two coordinates (Haversine formula)
 export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371; // Earth's radius in km
@@ -163,18 +263,19 @@ export function findNearestStops(
 
 // Find routes matching search query
 export function findRoutes(fromQuery: string, toQuery: string): Route[] {
-  const fromLower = fromQuery.toLowerCase();
-  const toLower = toQuery.toLowerCase();
-
   return mockRoutes.filter((route) => {
+    const locations = getSearchableLocations(route);
     const matchesFrom =
       !fromQuery ||
-      route.from.toLowerCase().includes(fromLower) ||
-      route.stops.some((s) => s.name.toLowerCase().includes(fromLower));
+      locations.some((location) => matchesLocation(fromQuery, location));
     const matchesTo =
       !toQuery ||
-      route.to.toLowerCase().includes(toLower) ||
-      route.stops.some((s) => s.name.toLowerCase().includes(toLower));
+      locations.some((location) => matchesLocation(toQuery, location));
     return matchesFrom && matchesTo;
   });
+}
+
+export function formatDisplayTime(time: string): string {
+  if (!time) return "";
+  return `${time} PM`;
 }

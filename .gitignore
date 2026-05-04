@@ -47,5 +47,7 @@ next-env.d.ts
 CLAUDE.md
 AGENTS.md
 
-lib/firebase.ts
+
+
 components/.claude
+lib/firebase.ts

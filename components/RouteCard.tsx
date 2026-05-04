@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Clock, ChevronDown, ChevronUp, Heart, Calendar } from 'lucide-react';
-import { Route as RouteType } from '@/lib/data';
+import { ArrowRight, Bus, Clock3, Heart, MapPin, RadioTower, Route as RouteIcon } from 'lucide-react';
+import { formatDisplayTime, Route as RouteType } from '@/lib/data';
 
 interface RouteCardProps {
   route: RouteType;
@@ -12,141 +11,101 @@ interface RouteCardProps {
 }
 
 export default function RouteCard({ route, isFavorite, onToggleFavorite }: RouteCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  // Get start and end times from first and last stops
-  const startTime = route.stops[0]?.arrivalTime || 'N/A';
-  const endTime = route.stops[route.stops.length - 1]?.arrivalTime || 'N/A';
+  const duration = Math.max(route.stops.length - 1, 1) * 18;
+  const distance = (route.stops.length * 4.6).toFixed(1);
+  const live = ['r1', 'r2', 'r4'].includes(route.id);
 
   return (
-    <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200">
-      {/* Main Card Content */}
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md"
-              style={{ backgroundColor: route.color }}
-            >
-              {route.busNumber}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
-                {route.routeName}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {route.stops.length} stops
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleFavorite();
-            }}
-            className={`p-2 rounded-lg transition-all flex-shrink-0 ${
-              isFavorite
-                ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700'
-            }`}
+    <article className="group rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xl hover:shadow-slate-950/10 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-800">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className="flex h-12 w-12 flex-none items-center justify-center rounded-lg text-sm font-black text-white shadow-lg"
+            style={{ backgroundColor: route.color }}
           >
-            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
-          </button>
-        </div>
-
-        {/* Journey Times - Now visible on card */}
-        <div className="flex items-center gap-3 mb-3 pb-3 border-b border-gray-100 dark:border-zinc-700">
-          <div className="flex items-center gap-1.5 flex-1">
-            <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] text-gray-400 uppercase font-medium">Start</p>
-              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{startTime}</p>
-            </div>
+            {route.busNumber}
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-50 dark:bg-zinc-700/50">
-            <Clock size={12} className="text-gray-400 flex-shrink-0" />
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-              {((route.stops.length - 1) * 25)} min
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 flex-1 justify-end">
-            <div className="min-w-0 text-right">
-              <p className="text-[10px] text-gray-400 uppercase font-medium">End</p>
-              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{endTime}</p>
-            </div>
-            <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-bold text-slate-950 dark:text-white">{route.routeName}</h3>
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <Bus className="h-3.5 w-3.5" />
+              {route.stops.length} stops
+            </p>
           </div>
         </div>
 
-        {/* Route Preview - From/To */}
-        <div className="flex items-center gap-2 mb-3 text-xs text-gray-600 dark:text-gray-400">
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
-            <span className="truncate">{route.from}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-8 h-px bg-gray-200 dark:bg-zinc-600" />
-            <ChevronDown size={10} className="text-gray-400 rotate-[-90deg]" />
-            <div className="w-8 h-px bg-gray-200 dark:bg-zinc-600" />
-          </div>
-          <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-            <span className="truncate">{route.to}</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
-          </div>
-        </div>
-
-        {/* Expand Button */}
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-50 dark:bg-zinc-700/50 text-gray-600 dark:text-gray-400 text-xs font-medium hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+          type="button"
+          onClick={onToggleFavorite}
+          className={`rounded-lg p-2 transition ${
+            isFavorite
+              ? 'bg-rose-50 text-rose-500 dark:bg-rose-950/40'
+              : 'text-slate-400 hover:bg-slate-100 hover:text-rose-500 dark:hover:bg-slate-800'
+          }`}
+          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
-          {isExpanded ? 'Hide Details' : 'View All Stops'}
-          {isExpanded ? (
-            <ChevronUp size={14} />
-          ) : (
-            <ChevronDown size={14} />
-          )}
+          <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
         </button>
-
-        {/* Expanded Content */}
-        {isExpanded && (
-          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-zinc-700">
-            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
-              <MapPin size={12} className="text-green-500" />
-              All Stops
-            </h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {route.stops.map((stop, index) => (
-                <div key={stop.id} className="flex items-center gap-2 text-xs">
-                  <div
-                    className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      index === 0
-                        ? 'bg-green-500'
-                        : index === route.stops.length - 1
-                        ? 'bg-red-500'
-                        : 'bg-gray-300 dark:bg-gray-600'
-                    }`}
-                  />
-                  <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
-                    {stop.name}
-                  </span>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 min-w-[48px] text-right">
-                    {stop.arrivalTime}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <Link
-              href={`/route/${route.id}`}
-              className="mt-3 block w-full py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold text-center hover:from-green-600 hover:to-emerald-700 transition-all shadow-md"
-            >
-              View Full Route Details
-            </Link>
-          </div>
-        )}
       </div>
-    </div>
+
+      <div className="my-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase text-emerald-600 dark:text-emerald-400">From</p>
+          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{route.from}</p>
+        </div>
+        <div className="flex items-center gap-1 text-slate-300 dark:text-slate-600">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="h-px w-8 bg-current" />
+          <ArrowRight className="h-4 w-4 text-slate-400" />
+          <span className="h-px w-8 bg-current" />
+          <span className="h-2 w-2 rounded-full bg-blue-500" />
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="text-[11px] font-bold uppercase text-blue-600 dark:text-blue-400">Where</p>
+          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{route.to}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 border-y border-slate-100 py-3 dark:border-slate-800">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-400">
+            <Clock3 className="h-3.5 w-3.5" />
+            Time
+          </p>
+          <p className="mt-1 text-sm font-bold text-slate-950 dark:text-white">{duration} min</p>
+        </div>
+        <div className="min-w-0">
+          <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-400">
+            <RouteIcon className="h-3.5 w-3.5" />
+            Distance
+          </p>
+          <p className="mt-1 text-sm font-bold text-slate-950 dark:text-white">{distance} km</p>
+        </div>
+        <div className="min-w-0">
+          <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-400">
+            <RadioTower className="h-3.5 w-3.5" />
+            Status
+          </p>
+          <p className={`mt-1 text-sm font-bold ${live ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+            {live ? 'Live' : 'Scheduled'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="min-w-0 text-xs text-slate-500 dark:text-slate-400">
+          <span className="font-semibold text-slate-700 dark:text-slate-200">{formatDisplayTime(route.stops[0]?.arrivalTime)}</span>
+          <span className="mx-1">to</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-200">{formatDisplayTime(route.stops.at(-1)?.arrivalTime ?? '')}</span>
+        </div>
+        <Link
+          href={`/route/${route.id}`}
+          className="inline-flex flex-none items-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 dark:bg-white dark:text-slate-950 dark:hover:bg-emerald-300"
+        >
+          Details
+          <MapPin className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </article>
   );
 }

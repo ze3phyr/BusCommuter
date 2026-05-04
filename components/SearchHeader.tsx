@@ -1,113 +1,138 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Navigation, User, Menu, Sun, Moon } from 'lucide-react';
+import { LocateFixed, Search, UserRound } from 'lucide-react';
+import { getLocationSuggestions } from '@/lib/data';
 
 interface SearchHeaderProps {
-  onSidebarToggle: () => void;
-  onThemeToggle: () => void;
-  isDark: boolean;
   onSearch: (from: string, to: string) => void;
+  onProfileClick: () => void;
+  signedInLabel?: string;
 }
 
-export default function SearchHeader({ onSidebarToggle, onThemeToggle, isDark, onSearch }: SearchHeaderProps) {
+export default function SearchHeader({ onSearch, onProfileClick, signedInLabel }: SearchHeaderProps) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const fromSuggestions = getLocationSuggestions(from);
+  const toSuggestions = getLocationSuggestions(to);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(from, to);
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    onSearch(from.trim(), to.trim());
   };
 
   const handleUseCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFrom('Current Location');
-        },
-        () => {}
-      );
-    }
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      () => setFrom('Current Location'),
+      () => setFrom('Udupi Bus Stand')
+    );
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-gray-200 dark:border-zinc-800">
-      <div className="max-w-4xl mx-auto px-4 py-3">
-        {/* Top Row */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onSidebarToggle}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Menu size={18} className="text-gray-600 dark:text-gray-400" />
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-sm">
-                <Search className="text-white" size={16} />
-              </div>
-              <span className="font-semibold text-gray-900 dark:text-white text-base">
-                Bus Commuter
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onThemeToggle}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              {isDark ? (
-                <Sun size={18} className="text-gray-600 dark:text-gray-400" />
-              ) : (
-                <Moon size={18} className="text-gray-600 dark:text-gray-400" />
-              )}
-            </button>
-            <button className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 hover:opacity-90 transition-opacity">
-              <User size={16} className="text-white" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search Form */}
-        <form onSubmit={handleSearch} className="space-y-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-green-500" />
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-50/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <form onSubmit={handleSearch} className="hidden flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:flex">
+            <div className="relative min-w-0 flex-1">
+              <span className="absolute left-3 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-emerald-500" />
               <input
-                type="text"
                 value={from}
-                onChange={(e) => setFrom(e.target.value)}
+                onChange={(event) => setFrom(event.target.value)}
                 placeholder="From"
-                className="w-full pl-9 pr-8 py-2.5 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                className="h-11 w-full rounded-md border border-transparent bg-slate-50 pl-8 pr-11 text-sm font-medium text-slate-900 transition placeholder:text-slate-400 focus:border-emerald-300 focus:bg-white dark:bg-slate-950 dark:text-white dark:focus:bg-slate-950"
+                aria-label="From"
+                list="from-stop-suggestions"
               />
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-                title="Use current location"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-slate-400 transition hover:bg-slate-100 hover:text-emerald-600 dark:hover:bg-slate-800"
+                aria-label="Use current location"
               >
-                <Navigation size={14} className="text-gray-400" />
+                <LocateFixed className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500" />
+            <div className="h-px w-8 bg-slate-200 dark:bg-slate-700" />
+
+            <div className="relative min-w-0 flex-1">
+              <span className="absolute left-3 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-blue-500" />
               <input
-                type="text"
                 value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder="To"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                onChange={(event) => setTo(event.target.value)}
+                placeholder="Where"
+                className="h-11 w-full rounded-md border border-transparent bg-slate-50 pl-8 pr-3 text-sm font-medium text-slate-900 transition placeholder:text-slate-400 focus:border-blue-300 focus:bg-white dark:bg-slate-950 dark:text-white dark:focus:bg-slate-950"
+                aria-label="Where"
+                list="to-stop-suggestions"
               />
             </div>
-          </div>
+
+            <button
+              type="submit"
+              className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-900/15 transition hover:bg-emerald-700 active:scale-[0.98]"
+            >
+              <Search className="h-4 w-4" />
+              Search
+            </button>
+          </form>
+
+          <datalist id="from-stop-suggestions">
+            {fromSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+
+          <datalist id="to-stop-suggestions">
+            {toSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
 
           <button
-            type="submit"
-            className="w-full py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-md shadow-green-500/20 active:scale-[0.98]"
+            type="button"
+            onClick={onProfileClick}
+            className="ml-auto rounded-lg bg-slate-950 p-2.5 text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
+            aria-label={signedInLabel ? `Open account for ${signedInLabel}` : 'Open login'}
+            title={signedInLabel ? `Signed in as ${signedInLabel}` : 'Sign in'}
           >
-            Search Routes
+            <UserRound className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSearch} className="mt-4 space-y-2 md:hidden">
+          <div className="grid gap-2">
+            <input
+              value={from}
+              onChange={(event) => setFrom(event.target.value)}
+              placeholder="From"
+              className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              aria-label="From"
+              list="from-stop-suggestions-mobile"
+            />
+            <input
+              value={to}
+              onChange={(event) => setTo(event.target.value)}
+              placeholder="Where"
+              className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              aria-label="Where"
+              list="to-stop-suggestions-mobile"
+            />
+          </div>
+          <datalist id="from-stop-suggestions-mobile">
+            {fromSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+          <datalist id="to-stop-suggestions-mobile">
+            {toSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+          <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-bold text-white">
+            <Search className="h-4 w-4" />
+            Search routes
           </button>
         </form>
       </div>
