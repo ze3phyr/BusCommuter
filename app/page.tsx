@@ -249,10 +249,10 @@ export default function Home() {
         favoriteCount={favoriteRoutes.length}
       />
 
-      <div className={`min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
+      <div className={`flex min-h-screen flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
         <SearchHeader onSearch={handleSearch} onProfileClick={handleProfileClick} signedInLabel={signedInLabel} />
 
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-10">
           {showHomeContent && (
             <>
               <section className="mb-8">

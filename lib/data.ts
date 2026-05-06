@@ -1,4 +1,6 @@
 // lib/data.ts
+export type BusStatus = 'on_time' | 'delayed' | 'cancelled';
+
 export type Stop = {
   id: string;
   name: string;
@@ -6,6 +8,87 @@ export type Stop = {
   lng: number;
   arrivalTime: string;
 };
+
+export type BusStatusUpdate = {
+  id: string;
+  routeId: string;
+  status: BusStatus;
+  delayMinutes: number;
+  estimatedArrival: string;
+  updatedBy: string;
+  updatedAt: number;
+  reason?: string;
+};
+
+export type RouteSubscription = {
+  id: string;
+  routeId: string;
+  userId: string;
+  stopIds: string[];
+  notificationEnabled: boolean;
+  createdAt: number;
+};
+
+export type AppNotification = {
+  id: string;
+  routeId: string;
+  type: 'delay' | 'eta_update' | 'status_change';
+  title: string;
+  message: string;
+  createdAt: number;
+  read: boolean;
+};
+
+const STORAGE_KEY_STATUS = 'bus_commuter_status';
+const STORAGE_KEY_SUBS = 'bus_commuter_subs';
+const STORAGE_KEY_NOTIFS = 'bus_commuter_notifs';
+
+export function loadBusStatus(routeId: string): BusStatusUpdate | null {
+  const stored = localStorage.getItem(STORAGE_KEY_STATUS);
+  if (!stored) return null;
+  const allStatus = JSON.parse(stored) as Record<string, BusStatusUpdate>;
+  return allStatus[routeId] || null;
+}
+
+export function saveBusStatus(status: BusStatusUpdate): void {
+  const stored = localStorage.getItem(STORAGE_KEY_STATUS);
+  const allStatus = stored ? JSON.parse(stored) : {};
+  allStatus[status.routeId] = status;
+  localStorage.setItem(STORAGE_KEY_STATUS, JSON.stringify(allStatus));
+}
+
+export function loadSubscriptions(userId: string): RouteSubscription[] {
+  const stored = localStorage.getItem(STORAGE_KEY_SUBS);
+  if (!stored) return [];
+  const allSubs = JSON.parse(stored) as RouteSubscription[];
+  return allSubs.filter(s => s.userId === userId);
+}
+
+export function saveSubscription(subscription: RouteSubscription): void {
+  const stored = localStorage.getItem(STORAGE_KEY_SUBS);
+  const allSubs: RouteSubscription[] = stored ? JSON.parse(stored) : [];
+  const existingIdx = allSubs.findIndex(s => s.routeId === subscription.routeId && s.userId === subscription.userId);
+  if (existingIdx >= 0) {
+    allSubs[existingIdx] = subscription;
+  } else {
+    allSubs.push(subscription);
+  }
+  localStorage.setItem(STORAGE_KEY_SUBS, JSON.stringify(allSubs));
+}
+
+export function loadNotifications(): AppNotification[] {
+  const stored = localStorage.getItem(STORAGE_KEY_NOTIFS);
+  if (!stored) return [];
+  return JSON.parse(stored) as AppNotification[];
+}
+
+export function saveNotification(notification: AppNotification): void {
+  const stored = localStorage.getItem(STORAGE_KEY_NOTIFS);
+  let notifs = stored ? JSON.parse(stored) as AppNotification[] : [];
+  notifs.unshift(notification);
+  notifs = notifs.slice(0, 50);
+  localStorage.setItem(STORAGE_KEY_NOTIFS, JSON.stringify(notifs));
+}
 
 export type Route = {
   id: string;

@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Bus, Clock3, Heart, MapPin, Navigation2, RadioTower, Route as RouteIcon, Share2 } from 'lucide-react';
 import RouteMap from '@/components/RouteMap';
+import BusStatusUpdate from '@/components/BusStatusUpdate';
+import RouteSubscription from '@/components/RouteSubscription';
+import NotificationsList from '@/components/NotificationsList';
 import { useToast } from '@/components/ToastProvider';
 import { formatDisplayTime, mockRoutes } from '@/lib/data';
 
@@ -90,6 +93,7 @@ export default function RoutePage() {
           </button>
 
           <div className="flex items-center gap-2">
+            <NotificationsList routes={mockRoutes} />
             <button
               type="button"
               onClick={handleShare}
@@ -211,6 +215,11 @@ export default function RoutePage() {
               })}
             </ol>
           </div>
+        </section>
+
+        <section className="mt-6 grid gap-6 lg:grid-cols-2">
+          <BusStatusUpdate routeId={routeId} busNumber={route.busNumber} defaultEta={route.stops[0]?.arrivalTime} />
+          <RouteSubscription routeId={routeId} busNumber={route.busNumber} />
         </section>
       </main>
     </div>
