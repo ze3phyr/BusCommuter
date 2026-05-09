@@ -9,7 +9,8 @@ export async function updateBusStatus(
   estimatedArrival: string,
   delayMinutes: number,
   userId: string,
-  reason?: string
+  reason?: string,
+  etaStopName?: string
 ): Promise<BusStatusUpdate> {
   const updateData: BusStatusUpdate = {
     id: routeId,
@@ -17,6 +18,7 @@ export async function updateBusStatus(
     status,
     delayMinutes,
     estimatedArrival,
+    etaStopName,
     updatedBy: userId,
     updatedAt: Date.now(),
     reason
@@ -30,7 +32,7 @@ export async function updateBusStatus(
   if (status === 'delayed' || status === 'cancelled') {
     const title = status === 'delayed' ? 'Bus Delayed' : 'Bus Cancelled';
     const message = status === 'delayed' 
-      ? `Bus is delayed by ${delayMinutes} minutes. ${reason || ''}`
+      ? `Bus is delayed by ${delayMinutes} minutes${etaStopName ? ` near ${etaStopName}` : ''}. ${reason || ''}`
       : `Bus service has been cancelled. ${reason || ''}`;
     
     saveNotification({
@@ -48,7 +50,7 @@ export async function updateBusStatus(
       routeId,
       type: 'status_change',
       title: 'Bus On Time',
-      message: `Bus is running on time. ETA: ${estimatedArrival}`,
+      message: 'Bus is running on time.',
       createdAt: Date.now(),
       read: false
     });

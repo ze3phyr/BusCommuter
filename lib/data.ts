@@ -15,6 +15,7 @@ export type BusStatusUpdate = {
   status: BusStatus;
   delayMinutes: number;
   estimatedArrival: string;
+  etaStopName?: string;
   updatedBy: string;
   updatedAt: number;
   reason?: string;

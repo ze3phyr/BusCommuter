@@ -4,17 +4,19 @@ import { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, CheckCircle, Bus, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 import { updateBusStatus, getBusStatus } from '@/lib/db';
-import type { BusStatusUpdate, BusStatus } from '@/lib/data';
+import type { BusStatusUpdate, BusStatus, Stop } from '@/lib/data';
 
 interface BusStatusUpdateProps {
   routeId: string;
   busNumber: string;
   defaultEta?: string;
+  stops?: Stop[];
 }
 
-export default function BusStatusUpdate({ routeId, busNumber, defaultEta }: BusStatusUpdateProps) {
+export default function BusStatusUpdate({ routeId, busNumber, defaultEta, stops = [] }: BusStatusUpdateProps) {
   const [status, setStatus] = useState<BusStatus>('on_time');
   const [eta, setEta] = useState(defaultEta || '');
+  const [etaStopId, setEtaStopId] = useState(stops[0]?.id || '');
   const [delayMinutes, setDelayMinutes] = useState(0);
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,20 +29,24 @@ export default function BusStatusUpdate({ routeId, busNumber, defaultEta }: BusS
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eta) {
-      showToast('Please enter estimated arrival time');
+
+    if (status === 'delayed' && !eta) {
+      showToast('Please enter the delayed ETA');
       return;
     }
+
+    const selectedStop = stops.find((stop) => stop.id === etaStopId);
 
     setIsLoading(true);
     try {
       await updateBusStatus(
         routeId,
         status,
-        eta,
+        status === 'cancelled' ? '' : eta,
         status === 'delayed' ? delayMinutes : 0,
         'anonymous-user',
-        reason || undefined
+        status === 'on_time' ? undefined : reason || undefined,
+        status === 'delayed' ? selectedStop?.name : undefined
       );
 
       const statusLabel = status === 'on_time' ? 'On Time' : status === 'delayed' ? 'Delayed' : 'Cancelled';
@@ -76,7 +82,7 @@ export default function BusStatusUpdate({ routeId, busNumber, defaultEta }: BusS
       {currentStatus && (
         <div className="mx-5 mt-4 rounded-lg bg-slate-50 px-4 py-3 dark:bg-slate-950">
           <p className="text-xs font-bold uppercase text-slate-400">Current Status</p>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${
               currentStatus.status === 'on_time' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' :
               currentStatus.status === 'delayed' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' :
@@ -89,7 +95,11 @@ export default function BusStatusUpdate({ routeId, busNumber, defaultEta }: BusS
                currentStatus.status === 'delayed' ? `Delayed ${currentStatus.delayMinutes} min` : 'Cancelled'}
             </span>
             <span className="text-sm text-slate-500">
-              ETA: {currentStatus.estimatedArrival}
+              {currentStatus.status === 'cancelled'
+                ? 'No ETA'
+                : currentStatus.etaStopName
+                  ? `ETA at ${currentStatus.etaStopName}: ${currentStatus.estimatedArrival}`
+                  : `ETA: ${currentStatus.estimatedArrival}`}
             </span>
           </div>
         </div>
@@ -120,47 +130,70 @@ export default function BusStatusUpdate({ routeId, busNumber, defaultEta }: BusS
         </div>
 
         {status === 'delayed' && (
+          <>
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
+                Delay Duration (minutes)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="180"
+                value={delayMinutes}
+                onChange={(e) => setDelayMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                placeholder="e.g., 15"
+              />
+            </div>
+
+            {stops.length > 0 && (
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
+                  ETA For Stop
+                </label>
+                <select
+                  value={etaStopId}
+                  onChange={(e) => setEtaStopId(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                >
+                  {stops.map((stop) => (
+                    <option key={stop.id} value={stop.id}>
+                      {stop.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
+                <Clock className="mr-1 inline h-4 w-4" />
+                Delayed ETA
+              </label>
+              <input
+                type="time"
+                value={eta}
+                onChange={(e) => setEta(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+          </>
+        )}
+
+        {(status === 'delayed' || status === 'cancelled') && (
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-              Delay Duration (minutes)
+              Reason (optional)
             </label>
             <input
-              type="number"
-              min="0"
-              max="180"
-              value={delayMinutes}
-              onChange={(e) => setDelayMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-              placeholder="e.g., 15"
+              placeholder="e.g., Traffic jam, Road construction..."
             />
           </div>
         )}
-
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-            <Clock className="mr-1 inline h-4 w-4" />
-            Estimated Arrival Time
-          </label>
-          <input
-            type="time"
-            value={eta}
-            onChange={(e) => setEta(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-            Reason (optional)
-          </label>
-          <input
-            type="text"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-            placeholder="e.g., Traffic jam, Road construction..."
-          />
-        </div>
 
         <button
           type="submit"

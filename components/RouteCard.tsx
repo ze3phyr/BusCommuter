@@ -28,7 +28,7 @@ export default function RouteCard({ route, isFavorite, onToggleFavorite }: Route
           <div className="min-w-0">
             <h3 className="truncate text-base font-bold text-slate-950 dark:text-white">{route.routeName}</h3>
             <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-              <Bus className="h-3.5 w-3.5" />
+              <Bus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               {route.stops.length} stops
             </p>
           </div>
@@ -44,11 +44,11 @@ export default function RouteCard({ route, isFavorite, onToggleFavorite }: Route
           }`}
           aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
-          <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+          <Heart className="h-4 w-4 sm:h-5 sm:w-5" fill={isFavorite ? 'currentColor' : 'none'} />
         </button>
       </div>
 
-      <div className="my-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <div className="my-4 hidden grid-cols-[1fr_auto_1fr] items-center gap-3 sm:grid">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase text-emerald-600 dark:text-emerald-400">From</p>
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{route.from}</p>
@@ -56,7 +56,7 @@ export default function RouteCard({ route, isFavorite, onToggleFavorite }: Route
         <div className="flex items-center gap-1 text-slate-300 dark:text-slate-600">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           <span className="h-px w-8 bg-current" />
-          <ArrowRight className="h-4 w-4 text-slate-400" />
+          <ArrowRight className="h-3.5 w-3.5 text-slate-400 sm:h-4 sm:w-4" />
           <span className="h-px w-8 bg-current" />
           <span className="h-2 w-2 rounded-full bg-blue-500" />
         </div>
@@ -69,21 +69,21 @@ export default function RouteCard({ route, isFavorite, onToggleFavorite }: Route
       <div className="grid grid-cols-3 gap-2 border-y border-slate-100 py-3 dark:border-slate-800">
         <div className="min-w-0">
           <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-400">
-            <Clock3 className="h-3.5 w-3.5" />
+            <Clock3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             Time
           </p>
           <p className="mt-1 text-sm font-bold text-slate-950 dark:text-white">{duration} min</p>
         </div>
         <div className="min-w-0">
           <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-400">
-            <RouteIcon className="h-3.5 w-3.5" />
+            <RouteIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             Distance
           </p>
           <p className="mt-1 text-sm font-bold text-slate-950 dark:text-white">{distance} km</p>
         </div>
         <div className="min-w-0">
           <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-400">
-            <RadioTower className="h-3.5 w-3.5" />
+            <RadioTower className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             Status
           </p>
           <p className={`mt-1 text-sm font-bold ${live ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -103,7 +103,7 @@ export default function RouteCard({ route, isFavorite, onToggleFavorite }: Route
           className="inline-flex flex-none items-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 dark:bg-white dark:text-slate-950 dark:hover:bg-emerald-300"
         >
           Details
-          <MapPin className="h-3.5 w-3.5" />
+          <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
         </Link>
       </div>
     </article>

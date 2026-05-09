@@ -6,8 +6,11 @@ import { Bus, CalendarDays, Heart, Home, Info, Map, Menu, Moon, Route, Sun, X } 
 import { useTheme } from '@/components/ThemeProvider';
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isMobileOpen: boolean;
+  isDesktopOpen: boolean;
+  onMobileOpen: () => void;
+  onMobileClose: () => void;
+  onDesktopToggle: () => void;
   activeSection: string;
   onSectionChange: (section: string) => void;
   favoriteCount: number;
@@ -22,55 +25,58 @@ const navItems = [
 ];
 
 export default function Sidebar({
-  isOpen,
-  onClose,
+  isMobileOpen,
+  isDesktopOpen,
+  onMobileOpen,
+  onMobileClose,
+  onDesktopToggle,
   activeSection,
   onSectionChange,
   favoriteCount,
 }: SidebarProps) {
   const pathname = usePathname();
   const { isDark, toggleTheme } = useTheme();
-  const compact = !isOpen;
+  const compact = !isDesktopOpen;
 
   const handleNav = (section: string) => {
     onSectionChange(section);
     if (window.innerWidth < 1024) {
-      onClose();
+      onMobileClose();
     }
   };
 
   return (
     <>
-      {!isOpen && (
+      {!isMobileOpen && (
         <button
           type="button"
-          onClick={onClose}
-          className="fixed bottom-4 left-4 z-40 rounded-full bg-slate-950 p-3 text-white shadow-xl shadow-slate-950/25 transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 lg:hidden"
+          onClick={onMobileOpen}
+          className="fixed bottom-4 left-4 z-40 rounded-full bg-slate-950 p-2.5 text-white shadow-xl shadow-slate-950/25 transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 lg:hidden"
           aria-label="Open navigation"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4" />
         </button>
       )}
 
-      {isOpen && (
+      {isMobileOpen && (
         <button
           type="button"
           aria-label="Close navigation overlay"
           className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm lg:hidden"
-          onClick={onClose}
+          onClick={onMobileClose}
         />
       )}
 
       <aside
         className={`fixed inset-y-0 left-0 z-50 border-r border-slate-200/80 bg-white/95 shadow-2xl shadow-slate-950/5 backdrop-blur-xl transition-[width,transform] duration-300 dark:border-slate-800 dark:bg-slate-950/95 lg:translate-x-0 ${
-          isOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full lg:w-20'
-        }`}
+          isMobileOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full'
+        } ${isDesktopOpen ? 'lg:w-72' : 'lg:w-20'}`}
         aria-label="Primary navigation"
       >
         <div className="flex h-full flex-col p-3">
-          <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/80 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/40">
-            <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-emerald-600 text-white shadow-lg shadow-emerald-900/20">
-              <Bus className="h-5 w-5" />
+          <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/80 p-2.5 dark:border-emerald-900/50 dark:bg-emerald-950/40 lg:p-3">
+            <div className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-emerald-600 text-white shadow-lg shadow-emerald-900/20 lg:h-11 lg:w-11">
+              <Bus className="h-4 w-4 lg:h-5 lg:w-5" />
             </div>
             {!compact && (
               <div className="min-w-0">
@@ -84,8 +90,8 @@ export default function Sidebar({
             )}
             <button
               type="button"
-              onClick={onClose}
-              className="ml-auto rounded-md p-2 text-slate-500 transition hover:bg-white hover:text-slate-900 dark:hover:bg-slate-900 dark:hover:text-white lg:hidden"
+              onClick={onMobileClose}
+              className="ml-auto rounded-md p-1.5 text-slate-500 transition hover:bg-white hover:text-slate-900 dark:hover:bg-slate-900 dark:hover:text-white lg:hidden"
               aria-label="Close sidebar"
             >
               <X className="h-4 w-4" />
@@ -101,7 +107,7 @@ export default function Sidebar({
                   key={item.id}
                   type="button"
                   onClick={() => handleNav(item.id)}
-                  className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold transition ${
+                  className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition lg:py-3 ${
                     selected
                       ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/10 dark:bg-white dark:text-slate-950'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'
@@ -109,7 +115,7 @@ export default function Sidebar({
                   title={compact ? item.label : undefined}
                   aria-current={selected ? 'page' : undefined}
                 >
-                  <item.icon className="h-5 w-5 flex-none" />
+                  <item.icon className="h-4 w-4 flex-none lg:h-5 lg:w-5" />
                   {!compact && <span className="min-w-0 flex-1 text-left">{item.label}</span>}
                   {!compact && item.id === 'favorites' && favoriteCount > 0 && (
                     <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-xs text-white">{favoriteCount}</span>
@@ -151,10 +157,10 @@ export default function Sidebar({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={onDesktopToggle}
               className="hidden w-full items-center justify-center rounded-lg p-3 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-900 dark:hover:text-white lg:flex"
-              aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-              title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              aria-label={isDesktopOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              title={isDesktopOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
               <Menu className="h-5 w-5" />
             </button>

@@ -2,6 +2,7 @@
 
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
+import { useState } from 'react';
 import { formatDisplayTime, Route } from '@/lib/data';
 
 delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
@@ -16,11 +17,23 @@ interface RouteMapProps {
 }
 
 export default function RouteMap({ route }: RouteMapProps) {
+  const [isMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 767px)').matches;
+  });
   const positions = route.stops.map((stop) => [stop.lat, stop.lng] as [number, number]);
   const center = positions[Math.floor(positions.length / 2)] ?? positions[0];
 
   return (
-    <MapContainer center={center} zoom={10} className="h-full w-full" scrollWheelZoom={false} zoomControl>
+    <MapContainer
+      center={center}
+      zoom={10}
+      className="h-full w-full"
+      scrollWheelZoom={false}
+      dragging={!isMobile}
+      touchZoom={!isMobile}
+      zoomControl
+    >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

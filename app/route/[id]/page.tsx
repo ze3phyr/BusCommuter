@@ -71,7 +71,7 @@ export default function RoutePage() {
           <h1 className="mt-4 text-xl font-black text-slate-950 dark:text-white">Route not found</h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">The requested bus route is not available in the current network.</p>
           <Link href="/" className="mt-5 inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-bold text-white">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Back home
           </Link>
         </div>
@@ -100,7 +100,7 @@ export default function RoutePage() {
               className="rounded-lg border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               aria-label="Share route"
             >
-              <Share2 className="h-5 w-5" />
+              <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
             <button
               type="button"
@@ -112,7 +112,7 @@ export default function RoutePage() {
               }`}
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5" fill={isFavorite ? 'currentColor' : 'none'} />
             </button>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function RoutePage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                    <RadioTower className="h-3.5 w-3.5" />
+                    <RadioTower className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     {stats.live ? 'Live tracking' : 'Scheduled service'}
                   </span>
                   {stats.live && <span className="live-pulse h-2.5 w-2.5 rounded-full bg-emerald-500" />}
@@ -150,7 +150,7 @@ export default function RoutePage() {
                 { icon: Bus, label: 'Stops', value: route.stops.length },
               ].map((item) => (
                 <div key={item.label} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
-                  <item.icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <item.icon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 sm:h-4 sm:w-4" />
                   <p className="mt-2 text-base font-black text-slate-950 dark:text-white">{item.value}</p>
                   <p className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{item.label}</p>
                 </div>
@@ -166,9 +166,9 @@ export default function RoutePage() {
                 <h2 className="text-lg font-black text-slate-950 dark:text-white">Route Map</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Prominent route path with stop markers.</p>
               </div>
-              <Navigation2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <Navigation2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 sm:h-5 sm:w-5" />
             </div>
-            <div className="h-[460px] sm:h-[560px]">
+            <div className="h-72 sm:h-[560px]">
               <RouteMap route={route} />
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function RoutePage() {
               </p>
             </div>
 
-            <ol className="max-h-[560px] overflow-y-auto px-5 py-4">
+            <ol className="px-5 py-4 lg:max-h-[560px] lg:overflow-y-auto">
               {route.stops.map((stop, index) => {
                 const first = index === 0;
                 const last = index === route.stops.length - 1;
@@ -218,7 +218,7 @@ export default function RoutePage() {
         </section>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-2">
-          <BusStatusUpdate routeId={routeId} busNumber={route.busNumber} defaultEta={route.stops[0]?.arrivalTime} />
+          <BusStatusUpdate routeId={routeId} busNumber={route.busNumber} defaultEta={route.stops[0]?.arrivalTime} stops={route.stops} />
           <RouteSubscription routeId={routeId} busNumber={route.busNumber} />
         </section>
       </main>

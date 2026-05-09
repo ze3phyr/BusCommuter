@@ -13,12 +13,14 @@ interface SearchHeaderProps {
 export default function SearchHeader({ onSearch, onProfileClick, signedInLabel }: SearchHeaderProps) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const fromSuggestions = getLocationSuggestions(from);
   const toSuggestions = getLocationSuggestions(to);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
     onSearch(from.trim(), to.trim());
+    setMobileSearchOpen(false);
   };
 
   const handleUseCurrentLocation = () => {
@@ -92,16 +94,27 @@ export default function SearchHeader({ onSearch, onProfileClick, signedInLabel }
 
           <button
             type="button"
+            onClick={() => setMobileSearchOpen((current) => !current)}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 md:hidden"
+            aria-expanded={mobileSearchOpen}
+            aria-controls="mobile-route-search"
+          >
+            <Search className="h-3.5 w-3.5" />
+            {from || to ? 'Edit search' : 'Search'}
+          </button>
+
+          <button
+            type="button"
             onClick={onProfileClick}
-            className="ml-auto rounded-lg bg-slate-950 p-2.5 text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
+            className="ml-auto rounded-lg bg-slate-950 p-2 text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 sm:p-2.5"
             aria-label={signedInLabel ? `Open account for ${signedInLabel}` : 'Open login'}
             title={signedInLabel ? `Signed in as ${signedInLabel}` : 'Sign in'}
           >
-            <UserRound className="h-5 w-5" />
+            <UserRound className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSearch} className="mt-4 space-y-2 md:hidden">
+        <form id="mobile-route-search" onSubmit={handleSearch} className={`${mobileSearchOpen ? 'mt-4 space-y-2' : 'hidden'} md:hidden`}>
           <div className="grid gap-2">
             <input
               value={from}
@@ -131,7 +144,7 @@ export default function SearchHeader({ onSearch, onProfileClick, signedInLabel }
             ))}
           </datalist>
           <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-bold text-white">
-            <Search className="h-4 w-4" />
+            <Search className="h-3.5 w-3.5" />
             Search routes
           </button>
         </form>

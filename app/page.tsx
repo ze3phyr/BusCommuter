@@ -38,7 +38,8 @@ const StopDistanceMap = dynamic(() => import('@/components/StopDistanceMap'), {
 });
 
 export default function Home() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [signedInUser, setSignedInUser] = useState<SignedInUser | null>(() => {
     if (typeof window === 'undefined') return null;
     return JSON.parse(localStorage.getItem('signedInUser') || 'null') as SignedInUser | null;
@@ -242,28 +243,23 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((current) => !current)}
+        isMobileOpen={mobileSidebarOpen}
+        isDesktopOpen={desktopSidebarOpen}
+        onMobileOpen={() => setMobileSidebarOpen(true)}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+        onDesktopToggle={() => setDesktopSidebarOpen((current) => !current)}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
         favoriteCount={favoriteRoutes.length}
       />
 
-      <div className={`flex min-h-screen flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
+      <div className={`flex min-h-screen flex-col transition-all duration-300 ${desktopSidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
         <SearchHeader onSearch={handleSearch} onProfileClick={handleProfileClick} signedInLabel={signedInLabel} />
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-10">
           {showHomeContent && (
             <>
-              <section className="mb-8">
-                <p className="text-sm font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Bus Commuter</p>
-                <h1 className="mt-2 text-2xl font-black text-slate-950 dark:text-white sm:text-4xl">Find buses, stops, and timings quickly.</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
-                  Search your start and destination, then compare clean route cards with stop count, timings, and route details.
-                </p>
-              </section>
-
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <section className="hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:block">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="flex items-center gap-2 text-lg font-black text-slate-950 dark:text-white">
@@ -421,12 +417,24 @@ export default function Home() {
           )}
 
           {activeSection === 'about' && (
-            <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-              Bus Commuter is structured as a professional route discovery platform for regional commuters. The current dataset is mocked for product polish, with room for real-time feeds, account sync, alerts, and operator dashboards.
+            <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <p className="text-sm font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Bus Commuter</p>
+              <h2 className="mt-2 text-xl font-black text-slate-950 dark:text-white">Find buses, stops, and timings quickly.</h2>
+              <div className="mt-3 space-y-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <p>
+                  Search your start and destination, then compare clean route cards with stop count, timings, distance, live status, and route details.
+                </p>
+                <p>
+                  Bus Commuter is structured as a professional route discovery platform for regional commuters. The current dataset is mocked for product polish, with room for real-time feeds, account sync, delay alerts, ETA updates, and operator dashboards.
+                </p>
+                <p>
+                  The goal is to keep everyday trip planning simple on mobile while still giving commuters clear route information, favorite routes, status updates, subscriptions, and map-based route context when they need more detail.
+                </p>
+              </div>
             </section>
           )}
 
-          <section className={showHomeContent ? 'mt-10' : 'mt-0'}>
+          <section className={showHomeContent ? 'mt-6 lg:mt-10' : 'mt-0'}>
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-xl font-black text-slate-950 dark:text-white">{sectionTitle}</h2>
