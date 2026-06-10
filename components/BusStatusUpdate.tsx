@@ -24,7 +24,15 @@ export default function BusStatusUpdate({ routeId, busNumber, defaultEta, stops 
   const { showToast } = useToast();
 
   useEffect(() => {
-    getBusStatus(routeId).then(setCurrentStatus);
+    const refreshStatus = async () => {
+      const updated = await getBusStatus(routeId);
+      setCurrentStatus(updated);
+    };
+
+    refreshStatus();
+    const interval = setInterval(refreshStatus, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
   }, [routeId]);
 
   const handleSubmit = async (e: React.FormEvent) => {

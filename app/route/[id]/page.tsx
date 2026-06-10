@@ -27,9 +27,19 @@ export default function RoutePage() {
   const stats = useMemo(() => {
     if (!route) return null;
 
+    const firstTimeStr = route.stops[0]?.arrivalTime;
+    const lastTimeStr = route.stops.at(-1)?.arrivalTime;
+    let duration = Math.max(route.stops.length - 1, 1) * 18;
+
+    if (firstTimeStr && lastTimeStr) {
+      const [h1, m1] = firstTimeStr.split(':').map(Number);
+      const [h2, m2] = lastTimeStr.split(':').map(Number);
+      duration = (h2 * 60 + m2) - (h1 * 60 + m1);
+    }
+
     return {
-      duration: Math.max(route.stops.length - 1, 1) * 18,
-      distance: (route.stops.length * 4.6).toFixed(1),
+      duration,
+      distance: route.distance ? route.distance.toFixed(1) : (route.stops.length * 4.6).toFixed(1),
       firstTime: formatDisplayTime(route.stops[0]?.arrivalTime ?? ''),
       lastTime: formatDisplayTime(route.stops.at(-1)?.arrivalTime ?? ''),
       live: ['r1', 'r2', 'r4'].includes(route.id),
@@ -186,6 +196,13 @@ export default function RoutePage() {
               {route.stops.map((stop, index) => {
                 const first = index === 0;
                 const last = index === route.stops.length - 1;
+                let minutesAfter = 0;
+                
+                if (!first && route.stops[0]) {
+                  const [h1, m1] = route.stops[0].arrivalTime.split(':').map(Number);
+                  const [h2, m2] = stop.arrivalTime.split(':').map(Number);
+                  minutesAfter = (h2 * 60 + m2) - (h1 * 60 + m1);
+                }
 
                 return (
                   <li key={`${stop.id}-${index}`} className="relative grid grid-cols-[32px_1fr_auto] gap-3 pb-5 last:pb-0">
@@ -204,7 +221,7 @@ export default function RoutePage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-slate-950 dark:text-white">{stop.name}</p>
                       <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {first ? 'Starting point' : last ? 'Final stop' : `${index * 4 + 3} min after departure`}
+                        {first ? 'Starting point' : last ? 'Final stop' : `${minutesAfter} min after departure`}
                       </p>
                     </div>
                     <div className="text-right">

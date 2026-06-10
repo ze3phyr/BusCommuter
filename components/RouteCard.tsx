@@ -11,8 +11,17 @@ interface RouteCardProps {
 }
 
 export default function RouteCard({ route, isFavorite, onToggleFavorite }: RouteCardProps) {
-  const duration = Math.max(route.stops.length - 1, 1) * 18;
-  const distance = (route.stops.length * 4.6).toFixed(1);
+  const firstTime = route.stops[0]?.arrivalTime;
+  const lastTime = route.stops.at(-1)?.arrivalTime;
+  let duration = Math.max(route.stops.length - 1, 1) * 18;
+
+  if (firstTime && lastTime) {
+    const [h1, m1] = firstTime.split(':').map(Number);
+    const [h2, m2] = lastTime.split(':').map(Number);
+    duration = (h2 * 60 + m2) - (h1 * 60 + m1);
+  }
+
+  const distance = route.distance ? route.distance.toFixed(1) : (route.stops.length * 4.6).toFixed(1);
   const live = ['r1', 'r2', 'r4'].includes(route.id);
 
   return (

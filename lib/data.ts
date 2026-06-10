@@ -45,10 +45,24 @@ const STORAGE_KEY_SUBS = 'bus_commuter_subs';
 const STORAGE_KEY_NOTIFS = 'bus_commuter_notifs';
 
 export function loadBusStatus(routeId: string): BusStatusUpdate | null {
+  if (typeof window === 'undefined') return null;
   const stored = localStorage.getItem(STORAGE_KEY_STATUS);
   if (!stored) return null;
-  const allStatus = JSON.parse(stored) as Record<string, BusStatusUpdate>;
-  return allStatus[routeId] || null;
+  try {
+    const allStatus = JSON.parse(stored) as Record<string, BusStatusUpdate>;
+    const status = allStatus[routeId];
+    if (!status) return null;
+
+    // Status expires after 3 minutes
+    const THREE_MINUTES_MS = 3 * 60 * 1000;
+    if (Date.now() - status.updatedAt > THREE_MINUTES_MS) {
+      return null;
+    }
+
+    return status;
+  } catch (e) {
+    return null;
+  }
 }
 
 export function saveBusStatus(status: BusStatusUpdate): void {
@@ -98,6 +112,7 @@ export type Route = {
   from: string;
   to: string;
   color: string;
+  distance?: number;
   stops: Stop[];
 };
 
@@ -147,15 +162,16 @@ export const mockRoutes: Route[] = [
     from: "Udupi Bus Stand",
     to: "Moodbidri",
     color: "#16a34a",
+    distance: 54,
     stops: [
       { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "06:00" },
-      { id: "s2", name: "HNB Junction", lat: 13.3420, lng: 74.7550, arrivalTime: "06:05" },
-      { id: "s3", name: "Manipal Bus Stand", lat: 13.3520, lng: 74.7850, arrivalTime: "06:20" },
-      { id: "s4", name: "Manipal Hospital", lat: 13.3540, lng: 74.7890, arrivalTime: "06:25" },
-      { id: "s5", name: "Kadiyali", lat: 13.3600, lng: 74.8100, arrivalTime: "06:40" },
-      { id: "s6", name: "Brahmavar", lat: 13.4150, lng: 74.8500, arrivalTime: "07:00" },
-      { id: "s7", name: "Kaikamba", lat: 13.2800, lng: 74.9200, arrivalTime: "07:30" },
-      { id: "s8", name: "Moodbidri Bus Stand", lat: 13.0680, lng: 74.9950, arrivalTime: "08:00" },
+      { id: "s2", name: "HNB Junction", lat: 13.3420, lng: 74.7550, arrivalTime: "06:08" },
+      { id: "s3", name: "Manipal Bus Stand", lat: 13.3520, lng: 74.7850, arrivalTime: "06:18" },
+      { id: "s4", name: "Manipal Hospital", lat: 13.3540, lng: 74.7890, arrivalTime: "06:23" },
+      { id: "s5", name: "Kadiyali", lat: 13.3600, lng: 74.8100, arrivalTime: "06:33" },
+      { id: "s6", name: "Brahmavar", lat: 13.4150, lng: 74.8500, arrivalTime: "06:48" },
+      { id: "s7", name: "Kaikamba", lat: 13.2800, lng: 74.9200, arrivalTime: "07:05" },
+      { id: "s8", name: "Moodbidri Bus Stand", lat: 13.0680, lng: 74.9950, arrivalTime: "07:20" },
     ]
   },
   {
@@ -165,16 +181,17 @@ export const mockRoutes: Route[] = [
     from: "Mangalore City",
     to: "Udupi",
     color: "#2563eb",
+    distance: 58,
     stops: [
       { id: "s10", name: "Mangalore City Bus Stand", lat: 12.8700, lng: 74.8800, arrivalTime: "05:30" },
-      { id: "s11", name: "Hampankatta", lat: 12.8650, lng: 74.8750, arrivalTime: "05:40" },
-      { id: "s12", name: "Kankanady", lat: 12.8900, lng: 74.8600, arrivalTime: "05:50" },
-      { id: "s13", name: "Surathkal NIT", lat: 12.9800, lng: 74.8000, arrivalTime: "06:30" },
-      { id: "s14", name: "Surathkal Bus Stand", lat: 12.9850, lng: 74.7950, arrivalTime: "06:35" },
-      { id: "s15", name: "Mulki", lat: 13.0500, lng: 74.7800, arrivalTime: "06:50" },
-      { id: "s16", name: "Padubidri", lat: 13.1200, lng: 74.7700, arrivalTime: "07:15" },
-      { id: "s17", name: "Santhekatte", lat: 13.2500, lng: 74.7550, arrivalTime: "07:45" },
-      { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "08:15" },
+      { id: "s11", name: "Hampankatta", lat: 12.8650, lng: 74.8750, arrivalTime: "05:38" },
+      { id: "s12", name: "Kankanady", lat: 12.8900, lng: 74.8600, arrivalTime: "05:48" },
+      { id: "s13", name: "Surathkal NIT", lat: 12.9800, lng: 74.8000, arrivalTime: "06:05" },
+      { id: "s14", name: "Surathkal Bus Stand", lat: 12.9850, lng: 74.7950, arrivalTime: "06:10" },
+      { id: "s15", name: "Mulki", lat: 13.0500, lng: 74.7800, arrivalTime: "06:22" },
+      { id: "s16", name: "Padubidri", lat: 13.1200, lng: 74.7700, arrivalTime: "06:35" },
+      { id: "s17", name: "Santhekatte", lat: 13.2500, lng: 74.7550, arrivalTime: "06:50" },
+      { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "07:00" },
     ]
   },
   {
@@ -184,17 +201,18 @@ export const mockRoutes: Route[] = [
     from: "Karwar",
     to: "Udupi",
     color: "#dc2626",
+    distance: 178,
     stops: [
-      { id: "s20", name: "Karwar Bus Stand", lat: 14.8100, lng: 74.1200, arrivalTime: "04:00" },
-      { id: "s21", name: "Ankola", lat: 14.5400, lng: 74.3200, arrivalTime: "05:00" },
-      { id: "s22", name: "Kumta", lat: 14.4300, lng: 74.4100, arrivalTime: "05:45" },
-      { id: "s23", name: "Honnavar", lat: 14.2800, lng: 74.4400, arrivalTime: "06:30" },
-      { id: "s24", name: "Manki", lat: 14.1500, lng: 74.5100, arrivalTime: "07:00" },
-      { id: "s25", name: "Murudeshwar", lat: 14.0900, lng: 74.5300, arrivalTime: "07:30" },
-      { id: "s26", name: "Bhatkal", lat: 13.9800, lng: 74.5600, arrivalTime: "08:15" },
-      { id: "s27", name: "Byndoor", lat: 13.8500, lng: 74.6200, arrivalTime: "09:00" },
-      { id: "s28", name: "Kundapura", lat: 13.6300, lng: 74.6900, arrivalTime: "10:00" },
-      { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "11:30" },
+      { id: "s20", name: "Karwar Bus Stand", lat: 14.8100, lng: 74.1200, arrivalTime: "06:00" },
+      { id: "s21", name: "Ankola", lat: 14.5400, lng: 74.3200, arrivalTime: "06:40" },
+      { id: "s22", name: "Kumta", lat: 14.4300, lng: 74.4100, arrivalTime: "07:20" },
+      { id: "s23", name: "Honnavar", lat: 14.2800, lng: 74.4400, arrivalTime: "07:50" },
+      { id: "s24", name: "Manki", lat: 14.1500, lng: 74.5100, arrivalTime: "08:20" },
+      { id: "s25", name: "Murudeshwar", lat: 14.0900, lng: 74.5300, arrivalTime: "08:45" },
+      { id: "s26", name: "Bhatkal", lat: 13.9800, lng: 74.5600, arrivalTime: "09:15" },
+      { id: "s27", name: "Byndoor", lat: 13.8500, lng: 74.6200, arrivalTime: "09:45" },
+      { id: "s28", name: "Kundapura", lat: 13.6300, lng: 74.6900, arrivalTime: "10:20" },
+      { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "11:00" },
     ]
   },
   {
@@ -204,6 +222,7 @@ export const mockRoutes: Route[] = [
     from: "Udupi Circle",
     to: "Udupi Circle",
     color: "#9333ea",
+    distance: 12,
     stops: [
       { id: "s30", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "07:00" },
       { id: "s31", name: "Clock Tower", lat: 13.3410, lng: 74.7520, arrivalTime: "07:05" },
@@ -222,14 +241,15 @@ export const mockRoutes: Route[] = [
     from: "Shivamogga",
     to: "Udupi",
     color: "#ea580c",
+    distance: 112,
     stops: [
-      { id: "s40", name: "Shivamogga Bus Stand", lat: 13.9300, lng: 75.5700, arrivalTime: "05:00" },
-      { id: "s41", name: "Thirthahalli", lat: 13.8800, lng: 75.2100, arrivalTime: "06:30" },
-      { id: "s42", name: "Agumbe Ghat", lat: 13.5100, lng: 75.0300, arrivalTime: "08:00" },
-      { id: "s43", name: "Agumbe Village", lat: 13.5200, lng: 75.0100, arrivalTime: "08:30" },
-      { id: "s44", name: "Someshwara", lat: 13.4500, lng: 74.9200, arrivalTime: "09:30" },
-      { id: "s45", name: "Dharmasthala Road", lat: 13.3800, lng: 74.8500, arrivalTime: "10:30" },
-      { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "11:00" },
+      { id: "s40", name: "Shivamogga Bus Stand", lat: 13.9300, lng: 75.5700, arrivalTime: "06:00" },
+      { id: "s41", name: "Thirthahalli", lat: 13.8800, lng: 75.2100, arrivalTime: "07:00" },
+      { id: "s42", name: "Agumbe Ghat", lat: 13.5100, lng: 75.0300, arrivalTime: "07:50" },
+      { id: "s43", name: "Agumbe Village", lat: 13.5200, lng: 75.0100, arrivalTime: "08:10" },
+      { id: "s44", name: "Someshwara", lat: 13.4500, lng: 74.9200, arrivalTime: "08:50" },
+      { id: "s45", name: "Dharmasthala Road", lat: 13.3800, lng: 74.8500, arrivalTime: "09:30" },
+      { id: "s1", name: "Udupi Bus Stand", lat: 13.3400, lng: 74.7500, arrivalTime: "10:00" },
     ]
   },
   {
@@ -239,13 +259,14 @@ export const mockRoutes: Route[] = [
     from: "Puttur",
     to: "Mangalore",
     color: "#0891b2",
+    distance: 50,
     stops: [
-      { id: "s50", name: "Puttur Bus Stand", lat: 12.7500, lng: 75.1800, arrivalTime: "06:00" },
-      { id: "s51", name: "Vittal", lat: 12.6900, lng: 75.1200, arrivalTime: "06:30" },
-      { id: "s52", name: "Bantwal", lat: 12.8400, lng: 75.0100, arrivalTime: "07:15" },
-      { id: "s53", name: "Moodbidri Road", lat: 12.8600, lng: 74.9500, arrivalTime: "07:45" },
+      { id: "s50", name: "Puttur Bus Stand", lat: 12.7500, lng: 75.1800, arrivalTime: "07:00" },
+      { id: "s51", name: "Vittal", lat: 12.6900, lng: 75.1200, arrivalTime: "07:15" },
+      { id: "s52", name: "Bantwal", lat: 12.8400, lng: 75.0100, arrivalTime: "07:35" },
+      { id: "s53", name: "Moodbidri Road", lat: 12.8600, lng: 74.9500, arrivalTime: "07:50" },
       { id: "s54", name: "Kulshekhar", lat: 12.8550, lng: 74.9100, arrivalTime: "08:00" },
-      { id: "s10", name: "Mangalore City Bus Stand", lat: 12.8700, lng: 74.8800, arrivalTime: "08:30" },
+      { id: "s10", name: "Mangalore City Bus Stand", lat: 12.8700, lng: 74.8800, arrivalTime: "08:15" },
     ]
   },
   {
@@ -255,6 +276,7 @@ export const mockRoutes: Route[] = [
     from: "Karkala Bus Stand",
     to: "Udupi Bus Stand",
     color: "#0f766e",
+    distance: 41,
     stops: [
       { id: "hmt-s1", name: "Karkala Bus Stand", lat: 13.212944, lng: 74.998611, arrivalTime: "07:32" },
       { id: "hmt-s2", name: "Venkataramana Temple", lat: 13.216500, lng: 74.992028, arrivalTime: "07:34" },
@@ -267,13 +289,13 @@ export const mockRoutes: Route[] = [
       { id: "hmt-s9", name: "Neere", lat: 13.303405, lng: 74.900905, arrivalTime: "07:50" },
       { id: "hmt-s10", name: "Near Guddeangadi", lat: 13.316621, lng: 74.886865, arrivalTime: "07:52" },
       { id: "hmt-s11", name: "Guddeangadi", lat: 13.321342, lng: 74.878600, arrivalTime: "07:54" },
-      { id: "hmt-s12", name: "Hiriyadka-Shirror", lat: 13.348183, lng: 74.871003, arrivalTime: "08:04" },
-      { id: "hmt-s13", name: "Hiriyadka", lat: 13.351316, lng: 74.865132, arrivalTime: "08:05" },
-      { id: "hmt-s14", name: "Athradi", lat: 13.351242, lng: 74.825655, arrivalTime: "08:10" },
-      { id: "hmt-s15", name: "Parkala", lat: 13.355091, lng: 74.806856, arrivalTime: "08:12" },
-      { id: "hmt-s16", name: "Tiger Circle", lat: 13.352407, lng: 74.787205, arrivalTime: "08:16" },
-      { id: "hmt-s17", name: "Indrali", lat: 13.345337, lng: 74.769980, arrivalTime: "08:20" },
-      { id: "hmt-s18", name: "Udupi Bus Stand", lat: 13.342642, lng: 74.747224, arrivalTime: "08:28" },
+      { id: "hmt-s12", name: "Hiriyadka-Shirror", lat: 13.348183, lng: 74.871003, arrivalTime: "08:06" },
+      { id: "hmt-s13", name: "Hiriyadka", lat: 13.351316, lng: 74.865132, arrivalTime: "08:08" },
+      { id: "hmt-s14", name: "Athradi", lat: 13.351242, lng: 74.825655, arrivalTime: "08:14" },
+      { id: "hmt-s15", name: "Parkala", lat: 13.355091, lng: 74.806856, arrivalTime: "08:17" },
+      { id: "hmt-s16", name: "Tiger Circle", lat: 13.352407, lng: 74.787205, arrivalTime: "08:22" },
+      { id: "hmt-s17", name: "Indrali", lat: 13.345337, lng: 74.769980, arrivalTime: "08:26" },
+      { id: "hmt-s18", name: "Udupi Bus Stand", lat: 13.342642, lng: 74.747224, arrivalTime: "08:34" },
     ]
   },
 ];
