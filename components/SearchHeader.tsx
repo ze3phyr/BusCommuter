@@ -2,20 +2,21 @@
 
 import { useState } from 'react';
 import { LocateFixed, Search, UserRound } from 'lucide-react';
-import { getLocationSuggestions } from '@/lib/data';
+import { getLocationSuggestionsForRoutes, mockRoutes, Route } from '@/lib/data';
 
 interface SearchHeaderProps {
   onSearch: (from: string, to: string) => void;
   onProfileClick: () => void;
   signedInLabel?: string;
+  routes?: Route[];
 }
 
-export default function SearchHeader({ onSearch, onProfileClick, signedInLabel }: SearchHeaderProps) {
+export default function SearchHeader({ onSearch, onProfileClick, signedInLabel, routes = mockRoutes }: SearchHeaderProps) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const fromSuggestions = getLocationSuggestions(from);
-  const toSuggestions = getLocationSuggestions(to);
+  const fromSuggestions = getLocationSuggestionsForRoutes(routes, from);
+  const toSuggestions = getLocationSuggestionsForRoutes(routes, to);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();

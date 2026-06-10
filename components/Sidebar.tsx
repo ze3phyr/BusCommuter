@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bus, CalendarDays, Heart, Home, Info, Map, Menu, Moon, Route, Sun, X } from 'lucide-react';
+import { Bus, CalendarDays, Heart, Home, Info, Map, Menu, Moon, PlusCircle, Route, Sun, X } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface SidebarProps {
@@ -14,6 +14,7 @@ interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
   favoriteCount: number;
+  routeCount: number;
 }
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { icon: Heart, label: 'Favorites', id: 'favorites' },
   { icon: CalendarDays, label: 'Schedules', id: 'schedules' },
   { icon: Route, label: 'Routes', id: 'routes' },
+  { icon: PlusCircle, label: 'Add Route', id: 'add-route' },
   { icon: Info, label: 'About', id: 'about' },
 ];
 
@@ -33,6 +35,7 @@ export default function Sidebar({
   activeSection,
   onSectionChange,
   favoriteCount,
+  routeCount,
 }: SidebarProps) {
   const pathname = usePathname();
   const { isDark, toggleTheme } = useTheme();
@@ -81,7 +84,7 @@ export default function Sidebar({
             {!compact && (
               <div className="min-w-0">
                 <Link href="/" className="block truncate text-base font-bold text-slate-950 dark:text-white">
-                  Bus Commuter
+                  BusGeleya
                 </Link>
                 <p className="truncate text-xs font-medium text-emerald-700 dark:text-emerald-300">
                   Coastal transit intelligence
@@ -137,7 +140,7 @@ export default function Sidebar({
                   <p className="text-xs text-slate-500 dark:text-slate-400">tracked stops</p>
                 </div>
                 <div>
-                  <p className="font-bold text-slate-950 dark:text-white">6</p>
+                  <p className="font-bold text-slate-950 dark:text-white">{routeCount}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">active routes</p>
                 </div>
               </div>

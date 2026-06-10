@@ -9,13 +9,14 @@ import BusStatusUpdate from '@/components/BusStatusUpdate';
 import RouteSubscription from '@/components/RouteSubscription';
 import NotificationsList from '@/components/NotificationsList';
 import { useToast } from '@/components/ToastProvider';
-import { formatDisplayTime, mockRoutes } from '@/lib/data';
+import { formatDisplayTime, getAllRoutes } from '@/lib/data';
 
 export default function RoutePage() {
   const params = useParams();
   const router = useRouter();
   const routeId = params.id as string;
-  const route = mockRoutes.find((item) => item.id === routeId);
+  const [routes] = useState(() => getAllRoutes());
+  const route = routes.find((item) => item.id === routeId);
   const [isFavorite, setIsFavorite] = useState(() => {
     if (typeof window === 'undefined') return false;
     const savedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]') as string[];
@@ -93,7 +94,7 @@ export default function RoutePage() {
           </button>
 
           <div className="flex items-center gap-2">
-            <NotificationsList routes={mockRoutes} />
+            <NotificationsList routes={routes} />
             <button
               type="button"
               onClick={handleShare}

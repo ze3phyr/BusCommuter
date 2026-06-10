@@ -101,6 +101,44 @@ export type Route = {
   stops: Stop[];
 };
 
+export const CUSTOM_ROUTES_STORAGE_KEY = "busgeleya-custom-routes";
+
+function readStoredRoutes(): Route[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(CUSTOM_ROUTES_STORAGE_KEY) || "[]");
+    if (!Array.isArray(stored)) return [];
+    return stored.filter((route): route is Route => {
+      return Boolean(
+        route &&
+        typeof route.id === "string" &&
+        typeof route.busNumber === "string" &&
+        typeof route.routeName === "string" &&
+        typeof route.from === "string" &&
+        typeof route.to === "string" &&
+        typeof route.color === "string" &&
+        Array.isArray(route.stops)
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
+export function getStoredCustomRoutes(): Route[] {
+  return readStoredRoutes();
+}
+
+export function saveStoredCustomRoutes(routes: Route[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CUSTOM_ROUTES_STORAGE_KEY, JSON.stringify(routes));
+}
+
+export function getAllRoutes(): Route[] {
+  return [...mockRoutes, ...getStoredCustomRoutes()];
+}
+
 export const mockRoutes: Route[] = [
   {
     id: "r1",
@@ -210,6 +248,34 @@ export const mockRoutes: Route[] = [
       { id: "s10", name: "Mangalore City Bus Stand", lat: 12.8700, lng: 74.8800, arrivalTime: "08:30" },
     ]
   },
+  {
+    id: "r7",
+    busNumber: "HMT",
+    routeName: "Karkala → Bailur → Udupi",
+    from: "Karkala Bus Stand",
+    to: "Udupi Bus Stand",
+    color: "#0f766e",
+    stops: [
+      { id: "hmt-s1", name: "Karkala Bus Stand", lat: 13.212944, lng: 74.998611, arrivalTime: "07:32" },
+      { id: "hmt-s2", name: "Venkataramana Temple", lat: 13.216500, lng: 74.992028, arrivalTime: "07:34" },
+      { id: "hmt-s3", name: "Bandimath KSRTC Bus Stand", lat: 13.224256, lng: 74.984672, arrivalTime: "07:34" },
+      { id: "hmt-s4", name: "Sadbhavana Circle", lat: 13.232294, lng: 74.984996, arrivalTime: "07:36" },
+      { id: "hmt-s5", name: "Joduraste Junction", lat: 13.238600, lng: 74.983322, arrivalTime: "07:40" },
+      { id: "hmt-s6", name: "Yerlapady", lat: 13.270267, lng: 74.946771, arrivalTime: "07:43" },
+      { id: "hmt-s7", name: "Bailur GPUC", lat: 13.283942, lng: 74.927833, arrivalTime: "07:46" },
+      { id: "hmt-s8", name: "Bailur Bus Stand", lat: 13.284556, lng: 74.920444, arrivalTime: "07:48" },
+      { id: "hmt-s9", name: "Neere", lat: 13.303405, lng: 74.900905, arrivalTime: "07:50" },
+      { id: "hmt-s10", name: "Near Guddeangadi", lat: 13.316621, lng: 74.886865, arrivalTime: "07:52" },
+      { id: "hmt-s11", name: "Guddeangadi", lat: 13.321342, lng: 74.878600, arrivalTime: "07:54" },
+      { id: "hmt-s12", name: "Hiriyadka-Shirror", lat: 13.348183, lng: 74.871003, arrivalTime: "08:04" },
+      { id: "hmt-s13", name: "Hiriyadka", lat: 13.351316, lng: 74.865132, arrivalTime: "08:05" },
+      { id: "hmt-s14", name: "Athradi", lat: 13.351242, lng: 74.825655, arrivalTime: "08:10" },
+      { id: "hmt-s15", name: "Parkala", lat: 13.355091, lng: 74.806856, arrivalTime: "08:12" },
+      { id: "hmt-s16", name: "Tiger Circle", lat: 13.352407, lng: 74.787205, arrivalTime: "08:16" },
+      { id: "hmt-s17", name: "Indrali", lat: 13.345337, lng: 74.769980, arrivalTime: "08:20" },
+      { id: "hmt-s18", name: "Udupi Bus Stand", lat: 13.342642, lng: 74.747224, arrivalTime: "08:28" },
+    ]
+  },
 ];
 
 function normalizeSearchValue(value: string): string {
@@ -281,10 +347,10 @@ function matchesLocation(query: string, candidate: string): boolean {
   });
 }
 
-export function getLocationSuggestions(query: string, maxResults: number = 6): string[] {
+export function getLocationSuggestionsForRoutes(routes: Route[], query: string, maxResults: number = 6): string[] {
   const uniqueLocations = Array.from(
     new Set(
-      mockRoutes.flatMap((route) => [route.from, route.to, ...route.stops.map((stop) => stop.name)])
+      routes.flatMap((route) => [route.from, route.to, ...route.stops.map((stop) => stop.name)])
     )
   );
 
@@ -310,6 +376,10 @@ export function getLocationSuggestions(query: string, maxResults: number = 6): s
     .sort((left, right) => left.score - right.score || left.location.localeCompare(right.location))
     .slice(0, maxResults)
     .map(({ location }) => location);
+}
+
+export function getLocationSuggestions(query: string, maxResults: number = 6): string[] {
+  return getLocationSuggestionsForRoutes(mockRoutes, query, maxResults);
 }
 
 // Helper function to calculate distance between two coordinates (Haversine formula)
@@ -345,9 +415,8 @@ export function findNearestStops(
   return allStops.sort((a, b) => a.distance - b.distance).slice(0, maxResults);
 }
 
-// Find routes matching search query
-export function findRoutes(fromQuery: string, toQuery: string): Route[] {
-  return mockRoutes.filter((route) => {
+export function findRoutesInList(routes: Route[], fromQuery: string, toQuery: string): Route[] {
+  return routes.filter((route) => {
     const locations = getSearchableLocations(route);
     const matchesFrom =
       !fromQuery ||
@@ -357,6 +426,11 @@ export function findRoutes(fromQuery: string, toQuery: string): Route[] {
       locations.some((location) => matchesLocation(toQuery, location));
     return matchesFrom && matchesTo;
   });
+}
+
+// Find routes matching search query
+export function findRoutes(fromQuery: string, toQuery: string): Route[] {
+  return findRoutesInList(mockRoutes, fromQuery, toQuery);
 }
 
 export function formatDisplayTime(time: string): string {

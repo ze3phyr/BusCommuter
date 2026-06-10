@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bus Commuter | Live Routes, Stops, and Schedules",
-    template: "%s | Bus Commuter",
+    default: "BusGeleya | Live Routes, Stops, and Schedules",
+    template: "%s | BusGeleya",
   },
   description:
     "A premium bus information platform for discovering routes, stops, schedules, and nearby transit options.",
   keywords: ["bus routes", "commuter app", "transit schedules", "nearby bus stops"],
   openGraph: {
-    title: "Bus Commuter",
+    title: "BusGeleya",
     description: "Find reliable bus routes, stops, timings, and live status updates.",
     url: "https://bus-commuter.vercel.app/",
-    siteName: "Bus Commuter",
+    siteName: "BusGeleya",
     type: "website",
   },
 };
@@ -33,7 +34,10 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
         <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            {children}
+            <Analytics />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

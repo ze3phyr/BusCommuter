@@ -1,76 +1,95 @@
-# BusCommuter - Local Bus Information System
+# BusGeleya - Local Bus Information System
 
-A web application designed to provide accurate and accessible information about local bus routes, stops, and timings for daily commuters.
-
-## Problem Statement
-
-Daily local bus commuters frequently face uncertainty and inconvenience due to the lack of reliable information regarding:
-- Upcoming bus arrivals at their stop
-- Exact routes and stops served by each bus
-- Scheduled and expected arrival timings
-- Whether a bus will stop at their intended destination
-
-This information gap results in prolonged waiting times, missed buses, increased stress, and reduced confidence in public transportation.
+BusGeleya is a local bus information app for finding routes, stops, timings, and route maps for daily commuters.
 
 ## Features
 
 - Search buses by origin and destination
-- Display of nearest bus stops based on location
-- Interactive route maps showing complete bus paths and stops
-- Detailed stop-wise timings and route information
-- Clean, responsive user interface optimized for both desktop and mobile
+- View route cards with stop count, timings, distance, and status cues
+- Open detailed route pages with stop-wise timings and map paths
+- Find nearby bus stops using location-based suggestions
+- Save favorite routes locally
+- Add custom bus routes from the sidebar
+- Store custom routes locally in the browser
+- Add stop timings for custom routes
+- Optionally add stop coordinates in one field, for example: `13.342642, 74.747224`
+- Use fallback generated coordinates when custom stop coordinates are not provided
+- Responsive desktop and mobile interface
+
+## Custom Routes
+
+Open `Add Route` from the left sidebar to create a local route.
+
+Required fields:
+- Bus name
+- At least two stops
+- Timing for each stop
+
+Optional fields:
+- Route name
+- Coordinates for each stop
+
+Custom routes are saved in browser `localStorage`, so they stay on the same device/browser without needing a backend. If coordinates are entered, the route detail map can use them for better stop placement. If coordinates are left blank, the app still saves the route and uses fallback coordinates.
+
+## Included Route Data
+
+The app includes mock route data in [lib/data.ts](lib/data.ts), including the `HMT` route from Karkala Bus Stand to Udupi Bus Stand.
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 16 App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Mapping**: Leaflet.js with React Leaflet
 - **Icons**: Lucide React
 
 ## Project Structure
+
+```text
 bus-commuter/
 ├── app/
-│   ├── route/[id]/          # Dynamic route details pages
+│   ├── route/[id]/          # Dynamic route detail pages
 │   ├── globals.css
 │   ├── layout.tsx
-│   └── page.tsx             # Homepage
+│   └── page.tsx             # Main app screen
 ├── components/
-│   └── RouteMap.tsx
+│   ├── CustomRouteForm.tsx  # Local custom route builder
+│   ├── RouteCard.tsx
+│   ├── RouteMap.tsx
+│   ├── SearchHeader.tsx
+│   └── Sidebar.tsx
 ├── lib/
-│   └── data.ts              # Mock route and stop data
+│   └── data.ts              # Route data and local route helpers
 └── README.md
-text## Getting Started
+```
+
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+
+- Node.js 18 or higher
+- npm
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/bus-commuter.git
-
-# Navigate to project directory
-cd bus-commuter
-
-# Install dependencies
 npm install
-
-# Run the development server
 npm run dev
-Open http://localhost:3000 to access the application.
-Deployment
-The application is deployed on Vercel and can be accessed at:
-https://bus-commuter.vercel.app/
-Future Enhancements
+```
 
-Integration with real-time bus tracking APIs
-User accounts and saved favorite routes
-Crowd level indicators
-Offline support as a Progressive Web App (PWA)
-Admin panel for route management
+Open `http://localhost:3000` in your browser.
 
-About the Project
-This project aims to bridge the information gap in local public transportation, making daily commuting more predictable and efficient for students, office-goers, and general passengers
+## Build
+
+```bash
+npm run lint
+npm run build
+```
+
+## Future Enhancements
+
+- Real-time bus tracking API integration
+- Cloud sync for saved routes and custom routes
+- Admin route management
+- Crowd level indicators
+- Offline support as a Progressive Web App

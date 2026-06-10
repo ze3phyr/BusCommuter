@@ -4,13 +4,14 @@ import { useCallback, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronLeft, ChevronRight, LocateFixed, MapPin, Navigation2, X } from 'lucide-react';
 import AccountMenu from '@/components/AccountMenu';
+import CustomRouteForm from '@/components/CustomRouteForm';
 import LoginModal from '@/components/LoginModal';
 import ProfileModal, { ProfileUser } from '@/components/ProfileModal';
 import RouteCard from '@/components/RouteCard';
 import SearchHeader from '@/components/SearchHeader';
 import Sidebar from '@/components/Sidebar';
 import { useToast } from '@/components/ToastProvider';
-import { calculateDistance, findNearestStops, findRoutes, formatDisplayTime, mockRoutes, Route } from '@/lib/data';
+import { calculateDistance, findNearestStops, findRoutesInList, formatDisplayTime, getAllRoutes, getStoredCustomRoutes, mockRoutes, Route, saveStoredCustomRoutes } from '@/lib/data';
 
 type NearbyStop = {
   stop: Route['stops'][number];
@@ -51,7 +52,9 @@ export default function Home() {
     if (typeof window === 'undefined') return [];
     return JSON.parse(localStorage.getItem('favorites') || '[]') as string[];
   });
-  const [searchResults, setSearchResults] = useState<Route[]>(mockRoutes);
+  const [customRoutes, setCustomRoutes] = useState<Route[]>(() => getStoredCustomRoutes());
+  const allRoutes = useMemo(() => [...mockRoutes, ...customRoutes], [customRoutes]);
+  const [searchResults, setSearchResults] = useState<Route[]>(() => getAllRoutes());
   const [hasSearched, setHasSearched] = useState(false);
   const [nearestStops, setNearestStops] = useState<NearbyStop[]>(() => findNearestStops(fallbackLocation.lat, fallbackLocation.lng, 10));
   const [nearestStopIndex, setNearestStopIndex] = useState(0);
@@ -112,7 +115,7 @@ export default function Home() {
   const handleToggleFavorite = useCallback(
     (routeId: string) => {
       setFavoriteRoutes((current) => {
-        const route = mockRoutes.find((item) => item.id === routeId);
+        const route = allRoutes.find((item) => item.id === routeId);
         const exists = current.includes(routeId);
         const nextFavorites = exists ? current.filter((id) => id !== routeId) : [...current, routeId];
 
@@ -121,7 +124,7 @@ export default function Home() {
         return nextFavorites;
       });
     },
-    [showToast]
+    [allRoutes, showToast]
   );
 
   const handleGetNearestStops = useCallback(() => {
@@ -161,11 +164,11 @@ export default function Home() {
   }, [showToast]);
 
   const handleSearch = useCallback((from: string, to: string) => {
-    const results = findRoutes(from, to);
+    const results = findRoutesInList(allRoutes, from, to);
     setSearchResults(results);
     setHasSearched(Boolean(from || to));
     setActiveSection('routes');
-  }, []);
+  }, [allRoutes]);
 
   const handleSectionChange = useCallback(
     (section: string) => {
@@ -173,25 +176,63 @@ export default function Home() {
       setHasSearched(false);
 
       if (section === 'favorites') {
-        setSearchResults(mockRoutes.filter((route) => favoriteRoutes.includes(route.id)));
+        setSearchResults(allRoutes.filter((route) => favoriteRoutes.includes(route.id)));
       } else {
-        setSearchResults(mockRoutes);
+        setSearchResults(allRoutes);
       }
 
       if (section === 'home') {
-        setSearchResults(mockRoutes);
+        setSearchResults(allRoutes);
       }
     },
-    [favoriteRoutes]
+    [allRoutes, favoriteRoutes]
+  );
+
+  const handleSaveCustomRoute = useCallback(
+    (route: Route) => {
+      setCustomRoutes((current) => {
+        const nextRoutes = [...current, route];
+        saveStoredCustomRoutes(nextRoutes);
+        setSearchResults([...mockRoutes, ...nextRoutes]);
+        return nextRoutes;
+      });
+      setHasSearched(false);
+      setActiveSection('routes');
+      showToast(`${route.busNumber} saved locally`);
+    },
+    [showToast]
+  );
+
+  const handleDeleteCustomRoute = useCallback(
+    (routeId: string) => {
+      setCustomRoutes((current) => {
+        const route = current.find((item) => item.id === routeId);
+        const nextRoutes = current.filter((item) => item.id !== routeId);
+        saveStoredCustomRoutes(nextRoutes);
+        setSearchResults([...mockRoutes, ...nextRoutes]);
+        setFavoriteRoutes((currentFavorites) => {
+          const nextFavorites = currentFavorites.filter((id) => id !== routeId);
+          localStorage.setItem('favorites', JSON.stringify(nextFavorites));
+          return nextFavorites;
+        });
+        showToast(`${route?.busNumber ?? 'Route'} deleted locally`, 'info');
+        return nextRoutes;
+      });
+    },
+    [showToast]
   );
 
   const routesToShow = useMemo(() => {
     if (activeSection === 'favorites') {
-      return mockRoutes.filter((route) => favoriteRoutes.includes(route.id));
+      return allRoutes.filter((route) => favoriteRoutes.includes(route.id));
+    }
+
+    if (!hasSearched && activeSection === 'routes') {
+      return allRoutes;
     }
 
     return searchResults;
-  }, [activeSection, favoriteRoutes, searchResults]);
+  }, [activeSection, allRoutes, favoriteRoutes, hasSearched, searchResults]);
 
   const uniqueNearestStops = useMemo(() => {
     const seenStops = new Set<string>();
@@ -237,7 +278,9 @@ export default function Home() {
         ? 'Today schedule'
         : activeSection === 'about'
           ? 'About the network'
-          : 'Available routes';
+          : activeSection === 'add-route'
+            ? 'Add local route'
+            : 'Available routes';
   const showHomeContent = activeSection === 'home' && !hasSearched;
 
   return (
@@ -251,10 +294,11 @@ export default function Home() {
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
         favoriteCount={favoriteRoutes.length}
+        routeCount={allRoutes.length}
       />
 
       <div className={`flex min-h-screen flex-col transition-all duration-300 ${desktopSidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
-        <SearchHeader onSearch={handleSearch} onProfileClick={handleProfileClick} signedInLabel={signedInLabel} />
+        <SearchHeader onSearch={handleSearch} onProfileClick={handleProfileClick} signedInLabel={signedInLabel} routes={allRoutes} />
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-10">
           {showHomeContent && (
@@ -418,14 +462,14 @@ export default function Home() {
 
           {activeSection === 'about' && (
             <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-sm font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Bus Commuter</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">BusGeleya</p>
               <h2 className="mt-2 text-xl font-black text-slate-950 dark:text-white">Find buses, stops, and timings quickly.</h2>
               <div className="mt-3 space-y-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
                 <p>
                   Search your start and destination, then compare clean route cards with stop count, timings, distance, live status, and route details.
                 </p>
                 <p>
-                  Bus Commuter is structured as a professional route discovery platform for regional commuters. The current dataset is mocked for product polish, with room for real-time feeds, account sync, delay alerts, ETA updates, and operator dashboards.
+                  BusGeleya is structured as a professional route discovery platform for regional commuters. The current dataset is mocked for product polish, with room for real-time feeds, account sync, delay alerts, ETA updates, and operator dashboards.
                 </p>
                 <p>
                   The goal is to keep everyday trip planning simple on mobile while still giving commuters clear route information, favorite routes, status updates, subscriptions, and map-based route context when they need more detail.
@@ -434,6 +478,11 @@ export default function Home() {
             </section>
           )}
 
+          {activeSection === 'add-route' && (
+            <CustomRouteForm customRoutes={customRoutes} onSaveRoute={handleSaveCustomRoute} onDeleteRoute={handleDeleteCustomRoute} />
+          )}
+
+          {activeSection !== 'add-route' && (
           <section className={showHomeContent ? 'mt-6 lg:mt-10' : 'mt-0'}>
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -451,7 +500,7 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setHasSearched(false);
-                    setSearchResults(mockRoutes);
+                    setSearchResults(allRoutes);
                     setActiveSection('home');
                   }}
                   className="rounded-md px-3 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
@@ -480,11 +529,12 @@ export default function Home() {
               </div>
             )}
           </section>
+          )}
         </main>
 
         <footer className="border-t border-slate-200 bg-white py-6 dark:border-slate-800 dark:bg-slate-900">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="font-semibold text-slate-700 dark:text-slate-200">Bus Commuter</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-200">BusGeleya</p>
             <div className="flex gap-4">
               <button type="button" onClick={() => handleSectionChange('routes')} className="hover:text-emerald-700 dark:hover:text-emerald-300">Routes</button>
               <button type="button" onClick={() => handleSectionChange('schedules')} className="hover:text-emerald-700 dark:hover:text-emerald-300">Schedules</button>
